@@ -128,7 +128,7 @@ model.data
 
 # now fit best model
 
-model.list.1 = list(A="zero", m=4, R="diagonal and unequal") # best model
+model.list.1 = list(A="zero", m=4, R="diagonal and equal") # best model
 model.1 = MARSS(seabird.mat, model=model.list.1, z.score=TRUE, form="dfa", control=cntl.list)
 
 
