@@ -210,7 +210,7 @@ for (i in 1:mm) {
   ## add panel labels
   mtext(paste("State", i), side = 3, line = 0.5)
   #axis(1, 12 * (0:dim(all.clim.dat)[2]) + 1, yr_frst + 0:dim(all.clim.dat)[2])
-  axis(1, 1:47, yr_frst + 0:dim(seabird.mat)[2])
+  axis(1, 1:46, yr_frst + 0:dim(seabird.mat)[2])
 }
 ## plot the loadings
 clr <- c("brown", 
