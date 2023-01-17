@@ -107,13 +107,12 @@ sblzlong <- pivot_longer(sblz, -YEAR, names_to = "covar", values_to = "value")
 ggplot(sblzlong, aes(YEAR, covar, size=value)) + geom_point()
 
 #sumr_euph_Kod_scaled
-#fem_cond_BSAI_scaled
 #sumr_juv_CPUE_GOA_scaled #only every second yr but think people car about this one???
 #fem_evenness_scaled
 
 ggplot(sblzlong, aes(YEAR, value)) + geom_point() + geom_line() + facet_wrap(~covar, scales='free')
 
-sblz <- sblz[,-c(6, 24, 27:28,8)]
+sblz <- sblz[,-c(6, 19)] #just removing fem evenness and euph Kod for now
 
 #manupulate data for DFA========
 
@@ -135,7 +134,7 @@ z.ind.mat <- z.ind.mat[-1,]
 #let's check and try dropping the most strongly correlated covars
 
 temp.cov <- data.frame(t(z.ind.mat))
-temp.cov <- na.omit(temp.cov)
+temp.cov <- na.omit(temp.cov) #ONE covar is every second yr so this removes a lot, don't do to whole df
 
 cov.cor <- cor(temp.cov)
 #mfrow=c(1,1, oma=c(1,5,15,1))
@@ -145,7 +144,7 @@ corrplot.mixed(cov.cor, upper='circle', lower='number')
 corrplot(cov.cor,  type = 'lower', method = 'number')
 corrplot.mixed(cov.cor, upper='circle', lower='number')
 
-#high corrs drop GOA v EGOA (done above)
+#high corrs drop GOA v EGOA - not removed for now, revisit?
 #spr_sst_EGOA_scaled
 
 
