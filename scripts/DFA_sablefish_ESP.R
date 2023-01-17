@@ -50,6 +50,10 @@ ggplot(sbltbl, aes(x=YEAR, y=DATA_VALUE)) + geom_bar(position="dodge", stat="ide
   #ylab("Standard anomaly") + xlab("") + 
   theme_bw() + geom_hline(yintercept = 0)
 
+table(sbltbl$INDICATOR_TYPE, sbltbl$INDICATOR_NAME)
+
+#remove socioeconomic indicators
+sbltbl <- sbltbl[which(sbltbl$INDICATOR_TYPE=="Ecosystem"),]
 
 #z-score====
 
@@ -65,17 +69,17 @@ sblz <- sblwide %>% mutate(
   copepod_size_WGOA_scaled = scale(Annual_Copepod_Community_Size_WGOA_Survey)   ,                   
   heatwave_GOA_scaled= scale(Annual_Heatwave_GOA_Model) ,                                     
  fem_evenness_scaled= scale(Annual_Sablefish_Age_Evenness_Female_Adult_Model)  ,             
-  sbl_CPUE_AKfishery_scaled = scale(Annual_Sablefish_Combined_CPUE_Alaska_Fishery ),                 
- fem_cond_BSAI_scaled = scale(Annual_Sablefish_Condition_Female_Adult_BSAI_Fishery) ,          
- fem_cond_GOA_scaled = scale(Annual_Sablefish_Condition_Female_Adult_GOA_Fishery) ,           
+ # sbl_CPUE_AKfishery_scaled = scale(Annual_Sablefish_Combined_CPUE_Alaska_Fishery ),                 
+ #fem_cond_BSAI_scaled = scale(Annual_Sablefish_Condition_Female_Adult_BSAI_Fishery) ,          
+ #fem_cond_GOA_scaled = scale(Annual_Sablefish_Condition_Female_Adult_GOA_Fishery) ,           
  YOY_grwth_middleton_scaled = scale(Annual_Sablefish_Growth_YOY_Middleton_Survey) ,                  
  incid_catch_arrowtooth_fishery_scaled = scale(Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery),
-  incid_catch_BSAI_scaled = scale(Annual_Sablefish_Incidental_Catch_BSAI_Fishery) ,                
-  incid_catch_GOA_scaled = scale(Annual_Sablefish_Incidental_Catch_GOA_Fishery) ,                 
-  longline_CPUE_GOA_scaled = scale(Annual_Sablefish_Longline_CPUE_GOA_Fishery)  ,                   
+ # incid_catch_BSAI_scaled = scale(Annual_Sablefish_Incidental_Catch_BSAI_Fishery) ,                
+#  incid_catch_GOA_scaled = scale(Annual_Sablefish_Incidental_Catch_GOA_Fishery) ,                 
+#  longline_CPUE_GOA_scaled = scale(Annual_Sablefish_Longline_CPUE_GOA_Fishery)  ,                   
   fem_mean_age_scaled = scale(Annual_Sablefish_Mean_Age_Female_Adult_Model)  ,                 
-  pot_CPUE_scaled = scale(Annual_Sablefish_Pot_CPUE_Alaska_Fishery) ,                      
- pot_CPUE_EBS_scaled = scale(Annual_Sablefish_Pot_CPUE_EBS_Fishery)   ,                       
+ # pot_CPUE_scaled = scale(Annual_Sablefish_Pot_CPUE_Alaska_Fishery) ,                      
+# pot_CPUE_EBS_scaled = scale(Annual_Sablefish_Pot_CPUE_EBS_Fishery)   ,                       
  chlorA_EGOA_scaled = scale(Spring_Chlorophylla_Biomass_EGOA_Satellite)   ,                  
  chlorA_GOA_scaled = scale(Spring_Chlorophylla_Biomass_GOA_Satellite)    ,                  
   chlorA_SEBS_scaled = scale(Spring_Chlorophylla_Biomass_SEBS_Satellite) ,                    
@@ -93,7 +97,7 @@ sblz <- sblwide %>% mutate(
  sumr_temp250m_GOA_scaled = scale(Summer_Temperature_250m_GOA_Survey)
 )
 
-sblz <- sblz[, c(1,35:65)]
+sblz <- sblz[, c(1,25:47)]
 
 
 
