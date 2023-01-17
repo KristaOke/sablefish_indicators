@@ -192,13 +192,13 @@ model.data <- model.data %>%
   arrange(dAICc)
 model.data
 
-
+#diagonal & unequal 3 and 4 trends are within 4 AIC so same?
 
 #rotate=======
 
 # now fit best model
 
-model.list.1 = list(A="zero", m=4, R="diagonal and unequal") # best model
+model.list.1 = list(A="zero", m=4, R="diagonal and unequal") # best model by a little
 model.1 = MARSS(z.ind.mat, model=model.list.1, z.score=TRUE, form="dfa", control=cntl.list)
 
 
@@ -239,7 +239,7 @@ rec.plot <- ggplot(Z.rot, aes(names, value, fill=key)) + geom_bar(stat="identity
 
 #based on nwfsc-timeseries.github.io
 
-yr_frst <- 1977
+yr_frst <- 1987
 
 ## get number of time series
 N_ts <- dim(z.ind.mat)[1]
