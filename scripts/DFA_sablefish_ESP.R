@@ -199,7 +199,8 @@ model.data
 # now fit best model
 
 model.list.1 = list(A="zero", m=4, R="diagonal and unequal") # best model by a little
-model.1 = MARSS(z.ind.mat, model=model.list.1, z.score=TRUE, form="dfa", control=cntl.list)
+model.1 = MARSS(z.ind.mat, model=model.list.1, z.score=TRUE, form="dfa", control=cntl.list1)
+cntl.list1 = list(minit=200, maxit=60000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
 
 # and rotate the loadings
@@ -239,7 +240,7 @@ rec.plot <- ggplot(Z.rot, aes(names, value, fill=key)) + geom_bar(stat="identity
 
 #based on nwfsc-timeseries.github.io
 
-yr_frst <- 1987
+yr_frst <- 1977
 
 ## get number of time series
 N_ts <- dim(z.ind.mat)[1]
@@ -323,7 +324,7 @@ ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 # now fit second best model
 
 model.list.2 = list(A="zero", m=3, R="diagonal and unequal") # second best model
-model.2 = MARSS(z.ind.mat, model=model.list.2, z.score=TRUE, form="dfa", control=cntl.list)
+model.2 = MARSS(z.ind.mat, model=model.list.2, z.score=TRUE, form="dfa", control=cntl.list2)
 #DOES NOT CONVERGE bump up to 40K iter
 cntl.list2 = list(minit=200, maxit=40000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
@@ -338,10 +339,10 @@ proc_rot = solve(H_inv) %*% model.2$states #doesn't work
 # reverse trend 2 to plot
 Z.rot[,2] <- -Z.rot[,2]
 
-Z.rot$names <- rownames(log.rec.mat)
+Z.rot$names <- rownames(z.ind.mat)
 Z.rot <- arrange(Z.rot, V1)
 Z.rot <- gather(Z.rot[,c(1,2)])
-Z.rot$names <- rownames(log.rec.mat)
+Z.rot$names <- rownames(z.ind.mat)
 #Z.rot$plot.names <- reorder(Z.rot$names, 1:14)
 
 
