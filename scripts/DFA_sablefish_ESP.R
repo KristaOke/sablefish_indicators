@@ -198,15 +198,15 @@ model.data <- model.data %>%
   arrange(dAICc)
 model.data
 
-#diagonal & unequal 3 and 4 trends are within 4 AIC so same?
+#diagonal & unequal 2 then 3 then 1 once arrowtooth are removed!
 
 #rotate=======
 
 # now fit best model
 
-model.list.1 = list(A="zero", m=4, R="diagonal and unequal") # best model by a little
+model.list.1 = list(A="zero", m=2, R="diagonal and unequal") # best model by a little
 model.1 = MARSS(z.ind.mat, model=model.list.1, z.score=TRUE, form="dfa", control=cntl.list1)
-cntl.list1 = list(minit=200, maxit=60000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
+cntl.list1 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
 
 # and rotate the loadings
