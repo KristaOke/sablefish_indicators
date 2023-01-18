@@ -122,6 +122,12 @@ sblz <- sblz[,-c(6, 19)] #just removing fem evenness and euph Kod for now
 # colnames(log.rec.mat) <- log.rec.mat[1,]
 # log.rec.mat <- log.rec.mat[-1,]
 
+#trying without arrowtooth_GOA_scaled and fem_mean_age_scaled because
+#they tend not to converge and may be preventing whole model
+#from converging?
+
+sblz <- sblz[,-c(2,8)]
+
 z.ind.mat <- t(as.matrix(sblz))
 colnames(z.ind.mat) <- z.ind.mat[1,]
 z.ind.mat <- z.ind.mat[-1,]
