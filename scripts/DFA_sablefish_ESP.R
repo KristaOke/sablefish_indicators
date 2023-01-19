@@ -128,6 +128,8 @@ sblz <- sblz[,-c(6, 19)] #just removing fem evenness and euph Kod for now
 
 sblz <- sblz[,-c(2,8)]
 
+sblz <- sblz[order(sblz$YEAR),] #otherwise model runs out of order!
+
 z.ind.mat <- t(as.matrix(sblz))
 colnames(z.ind.mat) <- z.ind.mat[1,]
 z.ind.mat <- z.ind.mat[-1,]
@@ -263,12 +265,12 @@ Z_rot = Z_est %*% H_inv
 ## rotate processes
 proc_rot = solve(H_inv) %*% model.1$states
 
-mm <- 4 #4 processes
+mm <- 2 #4 processes
 
 rec_names <- rownames(z.ind.mat)
 ylbl <- rec_names
 w_ts <- seq(dim(z.ind.mat)[2])
-layout(matrix(c(1, 2, 3, 4, 5, 6,7,8), mm, 2), widths = c(2, 1))
+layout(matrix(c(1, 2, 3, 4), mm, 2), widths = c(2, 1))
 ## par(mfcol=c(mm,2), mai=c(0.5,0.5,0.5,0.1), omi=c(0,0,0,0))
 # jpeg("figs/ugly_DFA_trends_loadings.jpg")
 par(mfcol=c(mm,2), mar = c(1.3,1.3,1.3,1.3), omi = c(0.1, 0.1, 0.1, 0.1))
@@ -332,7 +334,7 @@ ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 model.list.2 = list(A="zero", m=3, R="diagonal and unequal") # second best model
 model.2 = MARSS(z.ind.mat, model=model.list.2, z.score=TRUE, form="dfa", control=cntl.list2)
 #DOES NOT CONVERGE bump up to 40K iter
-cntl.list2 = list(minit=200, maxit=40000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
+cntl.list2 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
 
 # and rotate the loadings
@@ -451,10 +453,10 @@ ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 
 # now fit best model
 
-model.list.3 = list(A="zero", m=2, R="diagonal and equal") # second best model but not by much
+model.list.3 = list(A="zero", m=1, R="diagonal and equal") # 
 model.3 = MARSS(z.ind.mat, model=model.list.3, z.score=TRUE, form="dfa", control=cntl.list)
 #DOES NOT CONVERGE bump up to 60K iter
-cntl.list3 = list(minit=200, maxit=60000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
+cntl.list3 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
 
 # and rotate the loadings
@@ -510,12 +512,12 @@ Z_rot = Z_est %*% H_inv
 ## rotate processes
 proc_rot = solve(H_inv) %*% model.3$states
 
-mm <- 2 #processes
+mm <- 1 #processes
 
 rec_names <- rownames(z.ind.mat)
 ylbl <- rec_names
 w_ts <- seq(dim(z.ind.mat)[2])
-layout(matrix(c(1, 2, 3, 4), mm, 2), widths = c(2, 1))
+layout(matrix(c(1, 2), mm, 2), widths = c(2, 1))
 ## par(mfcol=c(mm,2), mai=c(0.5,0.5,0.5,0.1), omi=c(0,0,0,0))
 # jpeg("figs/ugly_DFA_trends_loadings.jpg")
 par(mfcol=c(mm,2), mar = c(1,1,1,1), omi = c(0, 0, 0, 0))
@@ -619,31 +621,36 @@ get_DFA_fits <- function(MLEobj, dd = NULL, alpha = 0.05) {
 # dat <- all.clim.dat - y_bar
 # rownames(dat) <- rownames(all.clim.dat)
 
-dat <- scale(log.rec.mat)
+# dat <- scale(log.rec.mat)
+# 
+# head(log.rec.mat)
+# 
+# log.rec.mat.std <- log.rec.mat
 
-head(log.rec.mat)
-
-log.rec.mat.std <- log.rec.mat
-
-i <- 1
-for(i in 1:nrow(log.rec.mat)) {
-  log.rec.mat.std[i,] <- (log.rec.mat[i,]-mean(log.rec.mat[i,], na.rm=TRUE))/sd(log.rec.mat[i,], na.rm=TRUE)  
-}
+# i <- 1
+# for(i in 1:nrow(z.ind.mat)) {
+#   z.ind.mat.std[i,] <- (z.ind.mat[i,]-mean(z.ind.mat[i,], na.rm=TRUE))/sd(z.ind.mat[i,], na.rm=TRUE)  
+# }
 #Double checking
-apply(log.rec.mat.std, 1, mean, na.rm=TRUE)
-apply(log.rec.mat.std, 1, sd, na.rm=TRUE)
-dat <- log.rec.mat.std
+# apply(z.ind.mat.std, 1, mean, na.rm=TRUE)
+# apply(z.ind.mat.std, 1, sd, na.rm=TRUE)
+ dat <- z.ind.mat
 #plot demeaned data
 
-driv <- rownames(log.rec.mat)
-#clr <- c("brown", "blue", "darkgreen", "darkred", "purple")
+driv <- rownames(z.ind.mat)
+clr <- c("brown", "blue", "darkgreen", "darkred", "purple",
+         "brown", "blue", "darkgreen", "darkred", "purple",
+         "brown", "blue", "darkgreen", "darkred", "purple",
+         "brown", "blue", "darkgreen", "darkred")
 cnt <- 1
-par(mfrow = c(N_ts, 4), mar = c(1, 1,1.5,1), omi = c(0.1, 
+# par(mfrow = c(N_ts, 2), mar = c(1, 1,1.5,1), omi = c(0.1, 
+#                                                      0.1, 0.1, 0.1))
+par(mfrow = c(N_ts, 1), mar = c(1, 1,1.5,1), omi = c(0.1, 
                                                      0.1, 0.1, 0.1))
 for (i in driv) {
   plot(dat[i, ], xlab = "", ylab = "", bty = "L", 
        xaxt = "n", pch = 16, col = clr[cnt], type = "b")
-  axis(1,  (0:dim(log.rec.mat)[2]) + 1, yr_frst + 0:dim(log.rec.mat)[2])
+  axis(1,  (0:dim(z.ind.mat)[2]) + 1, yr_frst + 0:dim(z.ind.mat)[2])
   title(i)
   cnt <- cnt + 1
 }
@@ -653,7 +660,7 @@ for (i in driv) {
 ## get model fits & CI's
 mod_fit <- get_DFA_fits(model.1)
 ## plot the fits
-par(mfrow = c(3, 2), mar = c(1, 1, 1, 1), omi = c(0, 
+par(mfrow = c(5, 4), mar = c(1, 1, 1, 1), omi = c(0, 
                                                   0, 0, 0))
 for (i in 1:N_ts) {
   up <- mod_fit$up[i, ]
@@ -661,7 +668,7 @@ for (i in 1:N_ts) {
   lo <- mod_fit$lo[i, ]
   plot(w_ts, mn, xlab = "", xaxt = "n", type = "n", 
        cex.lab = 1.2, ylim = c(min(lo), max(up)))
-  axis(1,  (0:dim(log.rec.mat)[2]) + 1, yr_frst + 0:dim(log.rec.mat)[2])
+  axis(1,  (0:dim(z.ind.mat)[2]) + 1, yr_frst + 0:dim(z.ind.mat)[2])
   points(w_ts, dat[i, ], pch = 16, col = clr[i])
   lines(w_ts, up, col = "darkgray")
   lines(w_ts, mn, col = "black", lwd = 2)
