@@ -397,10 +397,10 @@ ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 
 # now fit best model
 
-model.list.3 = list(A="zero", m=1, R="diagonal and equal") # 
+model.list.3 = list(A="zero", m=4, R="diagonal and equal") # 
 model.3 = MARSS(s.mat, model=model.list.3, z.score=TRUE, form="dfa", control=cntl.list)
 #DOES NOT CONVERGE bump up to 60K iter
-cntl.list3 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
+cntl.list3 = list(minit=200, maxit=10000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
 
 # and rotate the loadings
@@ -456,12 +456,12 @@ Z_rot = Z_est %*% H_inv
 ## rotate processes
 proc_rot = solve(H_inv) %*% model.3$states
 
-mm <- 1 #processes
+mm <- 4 #processes
 
 rec_names <- rownames(s.mat)
 ylbl <- rec_names
 w_ts <- seq(dim(s.mat)[2])
-layout(matrix(c(1, 2), mm, 2), widths = c(2, 1))
+layout(matrix(c(1, 2,3,4,5,6,7,8), mm, 2), widths = c(2, 1))
 ## par(mfcol=c(mm,2), mai=c(0.5,0.5,0.5,0.1), omi=c(0,0,0,0))
 # jpeg("figs/ugly_DFA_trends_loadings.jpg")
 par(mfcol=c(mm,2), mar = c(1,1,1,1), omi = c(0, 0, 0, 0))
