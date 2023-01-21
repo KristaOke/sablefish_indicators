@@ -73,6 +73,9 @@ scaled_dat <- scaled_dat[,c(1,11:19)]
 #drop arrowtooth_biomass_scaled and spawner_mean_age_scaled which rarely converge
 scaled_dat <- scaled_dat[,-c(8,6)]
 
+#drop recruitment
+scaled_dat <- scaled_dat[,-2]
+
 s.mat <- t(as.matrix(scaled_dat))
 colnames(s.mat) <- s.mat[1,]
 s.mat <- s.mat[-1,]
@@ -109,7 +112,7 @@ ggplot(templong, aes(year, value)) + geom_point() + geom_line() + facet_wrap(~co
 # now fit DFA models with 1-3 trends and different error structures and compare
 
 # changing convergence criterion to ensure convergence
-cntl.list = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
+cntl.list = list(minit=200, maxit=10000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
 # set up forms of R matrices
 levels.R = c("diagonal and equal",
