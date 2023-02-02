@@ -204,10 +204,21 @@ etaSquared(allL, type=2, anova=TRUE)
 
 AIC(allL, all1, all2, all3)
 
+#interactions???
+int1 <- glm(recruit_scaled ~ Spr_ST_SEBS_scaled*YOY_grwth_Middleton_scaled +
+              Spr_ST_SEBS_scaled*smr_adult_cond_scaled +
+              Spr_ST_SEBS_scaled*Smr_CPUE_juv_ADFG_scaled +
+              #spawner_mean_age_scaled +    #removed b/c too few df
+              spawner_age_evenness_scaled +
+              sablefish_bycatch_arrowtooth_fishery_scaled,
+            data=scaled_dat)
+summary(int1)
 
 
+ggplot(scaled_dat, aes(Smr_CPUE_juv_ADFG_scaled, recruit_scaled,  col=Spr_ST_SEBS_scaled))+
+  geom_point()
 
-
-
+ggplot(scaled_dat, aes(Year, Smr_CPUE_juv_ADFG_scaled, col=Spr_ST_SEBS_scaled))+
+  geom_point()
 
 
