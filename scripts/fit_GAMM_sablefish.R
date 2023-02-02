@@ -115,21 +115,94 @@ plot(mod1)
 
 mod2 <- gam(recruit_scaled ~ s(Spr_ST_SEBS_scaled, k=4) +
               YOY_grwth_Middleton_scaled +
-              s(Smr_CPUE_juv_ADFG_scaled, k=4) +
-              spawner_age_evenness_scaled +
-              s(smr_adult_cond_scaled, k=4),
+              Smr_CPUE_juv_ADFG_scaled +
+              s(spawner_age_evenness_scaled, k=4) +
+              smr_adult_cond_scaled,
             data=scaled_dat)
 gam.check(mod2) #NOT GOOD
 summary(mod2)
 plot(mod2)
 
+#what about linear?
+
+modL <- glm(recruit_scaled ~ Spr_ST_SEBS_scaled +
+      YOY_grwth_Middleton_scaled +
+      Smr_CPUE_juv_ADFG_scaled +
+      spawner_age_evenness_scaled +
+      smr_adult_cond_scaled,
+    data=scaled_dat)
+summary(modL)
+
+library(lsr)
+etaSquared(modL, type=2, anova=TRUE)
 
 
 
+#Repeat WITH ALL covars------
+#even those that have high correlations
+#danger!
+
+#OK with all covars has more coefficients than data
+
+all1 <- gam(recruit_scaled ~ s(Spr_ST_SEBS_scaled, k=4) +
+              s(YOY_grwth_Middleton_scaled, k=4) +
+              s(Smr_CPUE_juv_ADFG_scaled, k=4) +
+              s(spawner_mean_age_scaled, k=4) +
+              s(spawner_age_evenness_scaled, k=4) +
+             # s(arrowtooth_biomass_scaled, k=4) +
+              s(sablefish_bycatch_arrowtooth_fishery_scaled, k=4) +
+              s(smr_adult_cond_scaled, k=4),
+            data=scaled_dat)
+gam.check(all1) #NOT GOOD
+summary(all1)
+plot(all1)
+
+#reduce to only sig nonlinear
+
+all2 <- gam(recruit_scaled ~ s(Spr_ST_SEBS_scaled, k=4) +
+              s(YOY_grwth_Middleton_scaled, k=4) +
+              Smr_CPUE_juv_ADFG_scaled +
+              spawner_mean_age_scaled +
+              s(spawner_age_evenness_scaled, k=4) +
+              # s(arrowtooth_biomass_scaled, k=4) +
+              s(sablefish_bycatch_arrowtooth_fishery_scaled, k=4) +
+              smr_adult_cond_scaled,
+            data=scaled_dat)
+gam.check(all2) #NOT GOOD
+summary(all2)
+plot(all2)
+
+#some no longer significantly nonlinear reduce again
+
+all3 <- gam(recruit_scaled ~ Spr_ST_SEBS_scaled +
+              YOY_grwth_Middleton_scaled +
+              Smr_CPUE_juv_ADFG_scaled +
+              spawner_mean_age_scaled +
+              spawner_age_evenness_scaled +
+              # s(arrowtooth_biomass_scaled, k=4) +
+              s(sablefish_bycatch_arrowtooth_fishery_scaled, k=4) +
+              smr_adult_cond_scaled,
+            data=scaled_dat)
+gam.check(all3) #less awful
+summary(all3)
+plot(all3)
+
+#what about linear?
+
+allL <- glm(recruit_scaled ~ Spr_ST_SEBS_scaled +
+              YOY_grwth_Middleton_scaled +
+              Smr_CPUE_juv_ADFG_scaled +
+              #spawner_mean_age_scaled +    #removed b/c too few df
+              spawner_age_evenness_scaled +
+              sablefish_bycatch_arrowtooth_fishery_scaled +
+              smr_adult_cond_scaled,
+            data=scaled_dat)
+summary(allL)
 
 
+etaSquared(allL, type=2, anova=TRUE)
 
-
+AIC(allL, all1, all2, all3)
 
 
 
