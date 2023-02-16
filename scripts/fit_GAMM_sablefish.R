@@ -59,7 +59,7 @@ ggplot(scaled_dat, aes(sablefish_bycatch_arrowtooth_fishery_scaled, recruit_scal
 
 ggplot(scaled_dat, aes(smr_adult_cond_scaled, recruit_scaled)) + geom_point() +
   geom_smooth()
-
+#look into possible even-odd pattern?
 
 p1 <- ggplot(scaled_dat, aes(Year, recruit_scaled)) + geom_point() +
   geom_line()
