@@ -3,7 +3,7 @@
 require(tidyverse)
 require(ggthemes)
 require(viridis)
-require(R2jags)
+#require(R2jags)
 require(corrplot)
 require(reshape2)
 require(BEST)
