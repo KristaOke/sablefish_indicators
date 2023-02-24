@@ -86,3 +86,28 @@ summary(temp.fit.4)
 temp.fit.5 <- gbm(formula(form), data=brtdat, distribution='gaussian', bag.fraction=0.7, n.trees=1e5, shrinkage=0.001, interaction.depth=1)#, interaction.depth=1, cv.folds=1, n.minobsinnode=1)
 gbm.plot(temp.fit.5)
 summary(temp.fit.5)
+
+
+#getting worried about mean age, is it important because it is - by definition - autocorrelated (w 2 yr lag)
+#w recruitment?? PLus it is very odd smooth pattern
+
+#try without mean age or evenness
+
+brtdatsub <- brtdat[,10:18]
+
+fit.covars <- names(brtdatsub[,c(2:4, 7:9)]) 
+#fit.covars <- fit.covars[1:4] #to get things running lets subset out just a few
+
+form.covars <- paste(fit.covars, collapse=" + ")
+form <- paste(names(brtdat[10]), "~",form.covars)
+
+
+res <- names(brtdat[1])
+
+temp.fit.6 <- gbm.step(data=brtdat, gbm.y=res, gbm.x=fit.covars, family='gaussian', 
+                       tree.complexity = 1, #b/c very small sample
+                       learning.rate = 0.005, #slower b/c tc is low and want enough trees
+                       bag.fraction = 0.7) #paper recommends not fewer than 1000 trees
+gbm.plot(temp.fit.6)
+gbm.plot.fits(temp.fit.6)
+summary(temp.fit.6)
