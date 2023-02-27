@@ -62,7 +62,15 @@ brtdat <- brtdat[,10:18]
 res <- names(brtdat[1])
 
 #NEED TO SUBSET out a training dataset
-#train <- brtdat[]
+datlen <- length(brtdat$recruit_scaled)
+train <- brtdat[sample(nrow(brtdat),(round(datlen*0.8))),]
+train <- train[order(row.names(train)),]
+
+#save this training set?
+
+#NOW make dataframe of test data that's not in the training set!
+
+#playing with parameters------
 
 #see paper section on simplifying the predictor set esp imp if some predictors are repetitive and n is small
 
@@ -111,3 +119,21 @@ temp.fit.6 <- gbm.step(data=brtdat, gbm.y=res, gbm.x=fit.covars, family='gaussia
 gbm.plot(temp.fit.6)
 gbm.plot.fits(temp.fit.6)
 summary(temp.fit.6)
+
+
+#for real on training dataset-----
+
+#see goood tutorial on https://afit-r.github.io/tree_based_methods
+
+res <- names(brtdat[1])
+
+real.fit.1 <- gbm.step(data=train, gbm.y=res, gbm.x=fit.covars, family='gaussian', 
+                       tree.complexity = 1, #b/c very small sample
+                       learning.rate = 0.005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                       bag.fraction = 0.81) #won't run with bag fraction lower than 0.8 for training dataset of 34 years
+gbm.plot(real.fit.1)
+gbm.plot.fits(real.fit.1)
+gbm.perspec(real.fit.1, x=1, y=2) #not working
+summary(real.fit.1)
+
+best.real.1 <- gbm.perf(real.fit.1)
