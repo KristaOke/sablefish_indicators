@@ -155,6 +155,33 @@ ggplot(testing, aes(predictions, recruit_scaled)) + geom_point() + geom_abline()
 
 sum_squared_errors <- sum((preds-testing$recruit_scaled)^2, na.rm=TRUE)
 
+
+#try different interaction depths, compare SSE
+#loop isn't working yet
+(IntDepthG <- sapply(1:8, function(x) {
+  # fit model
+  mod_boost <- gbm.step(gbm.y=res, gbm.x=fit.covars,
+                      data = train,
+                      family = "gaussian",                       
+                      tree.complexity = 1, #b/c very small sample
+                      learning.rate = 0.005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                      bag.fraction = 0.8,
+                      n.minobsinnode=1,
+                      n.folds = 5,
+                      interaction.depth=x)
+  # calculate best value for number of trees
+  bestHit <- gbm.perf(mod_boost)[1]
+  # calculate the sum of squared errors
+  boostSSE <- sum((predict(mod_boost, testing, n.trees = bestHit) - testing$recruit_scaled)^2,
+                  na.rm = TRUE)
+  return(boostSSE)}))
+
+
+
+
+
+
+
 #can I find a covar that's messing everything up? No
 real.fit.2 <- gbm.step(data=train, gbm.y=10, gbm.x=c(11:13,16:18), family='gaussian', 
                        tree.complexity = 1, #b/c very small sample
