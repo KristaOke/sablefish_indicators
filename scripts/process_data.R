@@ -54,6 +54,25 @@ expore.hist
 
 dat$ln_rec <- log(dat$Recruitment)
 
+#log data that doesn't look normal
+#Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery
+#Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey
+
+
+
+
+#UPDATE HERE TO LOG!!!!!!!!!
+
+
+#EDIT HERE
+
+
+
+
+
+
+#arrowtooth biomass does not look normal but also not skewed, just weird
+
 covar.noR <- dat %>% gather(key=type, value=value, -c(Year, Recruitment, ln_rec))
 
 
@@ -70,6 +89,8 @@ ln.rec.plot <- ggplot(covar.noR, aes(y=ln_rec, x=value, fill=type)) +
   facet_wrap(~type, scales='free') +
   theme(legend.position = "NA")
 ln.rec.plot
+
+
 
 #z-score data=======
 
