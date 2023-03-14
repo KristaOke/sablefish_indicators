@@ -88,16 +88,43 @@ scaled_dat <- dat %>% #group_by(Year) %>%
 #split data======
 
 #NEED TO SUBSET out a training dataset
+#do this five times so it can be repeated
 datlen <- length(scaled_dat$recruit_scaled)
-train <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
-train <- train[order(row.names(train)),]
+train1 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
+train1 <- train1[order(row.names(train1)),]
+testing1 <- anti_join(scaled_dat, train1)
 
-testing <- anti_join(scaled_dat, train)
+train2 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
+train2 <- train2[order(row.names(train2)),]
+testing2 <- anti_join(scaled_dat, train2)
+
+train3 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
+train3 <- train3[order(row.names(train3)),]
+testing3 <- anti_join(scaled_dat, train3)
+
+train4 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
+train4 <- train4[order(row.names(train4)),]
+testing4 <- anti_join(scaled_dat, train4)
+
+train5 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
+train5 <- train5[order(row.names(train5)),]
+testing5 <- anti_join(scaled_dat, train5)
 
 #save this training set?
 
 #save analysis-ready data======
 
+write.csv(train1, file=paste(wd,"/data/dataset_training1.csv", sep=""))
+write.csv(train2, file=paste(wd,"/data/dataset_training2.csv", sep=""))
+write.csv(train3, file=paste(wd,"/data/dataset_training3.csv", sep=""))
+write.csv(train4, file=paste(wd,"/data/dataset_training4.csv", sep=""))
+write.csv(train5, file=paste(wd,"/data/dataset_training5.csv", sep=""))
+
+write.csv(test1, file=paste(wd,"/data/dataset_test1.csv", sep=""))
+write.csv(test2, file=paste(wd,"/data/dataset_test2.csv", sep=""))
+write.csv(test3, file=paste(wd,"/data/dataset_test3.csv", sep=""))
+write.csv(test4, file=paste(wd,"/data/dataset_test4.csv", sep=""))
+write.csv(test5, file=paste(wd,"/data/dataset_test5.csv", sep=""))
 
 
 
