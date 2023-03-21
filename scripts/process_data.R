@@ -26,7 +26,10 @@ dir.figs <- file.path(wd,"figs")
 
 #Get data plot data =======
 
-dat <- read.csv(file.path(dir.data, "sablefish_BAS_indicators_2022.csv"))
+#dat <- read.csv(file.path(dir.data, "sablefish_BAS_indicators_2022.csv"))
+dat <- read.csv(file.path(dir.data, "sablefish_esp_2022_updated.csv"), skip=1)
+
+
 
 #before scaling, let's look and see if any need to be normalized
 
@@ -52,36 +55,54 @@ expore.hist <- ggplot(covar.list, aes(x=value, fill=type)) +
 expore.hist
 
 
-dat$ln_rec <- log(dat$Recruitment)
+#dat$ln_rec <- log(dat$Recruitment)
+dat$ln_rec <- log(dat$Recruitment_year_class)
+
 
 #log data that doesn't look normal
 #Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery
 #Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey
 
 
+#NOT normal but not sure logging will help:
+#Summer_Temperature_250m_GOA_Survey
+#Annual_Arrowtooth_Biomass_GOA_Model
 
+#euphausiid data is super sparse, will need to come out for most analyses, 
+#retain for now, maybe can go into some
 
-#UPDATE HERE TO LOG!!!!!!!!!
-
-
-#EDIT HERE
-
-
-
-
-
-
-#arrowtooth biomass does not look normal but also not skewed, just weird
-
-covar.noR <- dat %>% gather(key=type, value=value, -c(Year, Recruitment, ln_rec))
-
-
-rec.plot <- ggplot(covar.noR, aes(y=Recruitment, x=value, fill=type)) +
-  geom_point() + geom_smooth() +
+log.hist <- ggplot(covar.list, aes(x=log(value), fill=type)) +
+  theme_linedraw() +
+  geom_histogram() +
+  geom_density(alpha=0.2) +
   scale_fill_viridis(discrete=TRUE) +
   facet_wrap(~type, scales='free') +
   theme(legend.position = "NA")
-rec.plot
+log.hist
+
+#logging seems to help the CPUE covars but not heatwave, arrowtooth, or summer 250m GOA temp
+
+dat$ln_Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey <- log(dat$Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey)
+dat$ln_Summer_Sablefish_CPUE_Juvenile_GOA_Survey <- log(dat$Summer_Sablefish_CPUE_Juvenile_GOA_Survey)
+
+dat$ln_Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery <- log(dat$Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery)
+dat$ln_plus_Annual_Heatwave_GOA_Model <- log(dat$Annual_Heatwave_GOA_Model)
+
+#also incident catch in arrowtooth fishery and log + 1 of heatwave
+
+dat <- dat[,-c("Summer_Sablefish_CPUE_Juvenile_GOA_Survey",
+               "Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey",
+               "Recruitment_year_class")]
+
+#not working let's brute force it for now, 
+#RETURN TO THIS
+dat <- dat[,c(1, 4:14, 17:20, 22:27)]
+
+
+covar.noR <- dat %>% gather(key=type, value=value, -c(Year, ln_rec))
+
+
+
 
 ln.rec.plot <- ggplot(covar.noR, aes(y=ln_rec, x=value, fill=type)) +
   geom_point() + geom_smooth() +
@@ -94,16 +115,41 @@ ln.rec.plot
 
 #z-score data=======
 
+# scaled_dat <- dat %>% #group_by(Year) %>%
+#   mutate(recruit_scaled=scale(ln_rec),
+#          Spr_ST_SEBS_scaled=scale(Spring_Temperature_Surface_SEBS_Satellite),
+#          YOY_grwth_Middleton_scaled=scale(Annual_Sablefish_Growth_YOY_Middleton_Survey),
+#          Smr_CPUE_juv_ADFG_scaled=scale(Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey),
+#          spawner_mean_age_scaled=scale(Annual_Sablefish_Mean_Age_Female_Adult_Model),
+#          spawner_age_evenness_scaled=scale(Annual_Sablefish_Age_Evenness_Female_Adult_Model),
+#          arrowtooth_biomass_scaled=scale(Annual_Arrowtooth_Biomass_GOA_Model),
+#          sablefish_bycatch_arrowtooth_fishery_scaled=scale(Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery),
+#          smr_adult_cond_scaled=scale(Summer_Sablefish_Condition_Female_Adult_GOA_Survey))
+# 
+
 scaled_dat <- dat %>% #group_by(Year) %>%
   mutate(recruit_scaled=scale(ln_rec),
+         ann_heatwave_GOA_scaled=scale(ln_plus_Annual_Heatwave_GOA_Model),                                      
+          Spr_ST_GOA_scaled=scale(Spring_Temperature_Surface_GOA_Satellite),
          Spr_ST_SEBS_scaled=scale(Spring_Temperature_Surface_SEBS_Satellite),
+         Smr_temp_250m_GOA_scaled = scale(Summer_Temperature_250m_GOA_Survey),
+         Spr_chlA_biom_GOA_scaled = scale(Spring_Chlorophylla_Biomass_GOA_Satellite),                      
+         Spr_chlA_biom_SEBS_scaled = scale(Spring_Chlorophylla_Biomass_SEBS_Satellite),                     
+         Spr_chlA_peak_GOA_scaled = scale(Spring_Chlorophylla_Peak_GOA_Satellite),                         
+         Spr_chlA_peak_SEBS_scaled = scale(Spring_Chlorophylla_Peak_SEBS_Satellite),                      
+         ann_Copepod_size_EGOA_scaled = scale(Annual_Copepod_Community_Size_EGOA_Survey),                      
+         ann_Copepod_size_WGOA_scaled = scale(Annual_Copepod_Community_Size_WGOA_Survey),                      
+         Smr_euph_abun_Kod_scaled=scale(Summer_Euphausiid_Abundance_Kodiak_Survey),
          YOY_grwth_Middleton_scaled=scale(Annual_Sablefish_Growth_YOY_Middleton_Survey),
-         Smr_CPUE_juv_ADFG_scaled=scale(Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey),
+         Smr_CPUE_juv_ADFG_ln_scaled=scale(ln_Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey),
+         Smr_CPUE_juv_GOA_ln_scaled=scale(ln_Summer_Sablefish_CPUE_Juvenile_GOA_Survey),
          spawner_mean_age_scaled=scale(Annual_Sablefish_Mean_Age_Female_Adult_Model),
          spawner_age_evenness_scaled=scale(Annual_Sablefish_Age_Evenness_Female_Adult_Model),
+         Smr_condition_fem_age4_GOA_scaled=scale(Summer_Sablefish_Condition_Female_Age4_GOA_Survey),
          arrowtooth_biomass_scaled=scale(Annual_Arrowtooth_Biomass_GOA_Model),
-         sablefish_bycatch_arrowtooth_fishery_scaled=scale(Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery),
+         sablefish_bycatch_arrowtooth_fishery_scaled=scale(ln_Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery),
          smr_adult_cond_scaled=scale(Summer_Sablefish_Condition_Female_Adult_GOA_Survey))
+
 
 
 #split data======
@@ -141,11 +187,11 @@ write.csv(train3, file=paste(wd,"/data/dataset_training3.csv", sep=""))
 write.csv(train4, file=paste(wd,"/data/dataset_training4.csv", sep=""))
 write.csv(train5, file=paste(wd,"/data/dataset_training5.csv", sep=""))
 
-write.csv(test1, file=paste(wd,"/data/dataset_test1.csv", sep=""))
-write.csv(test2, file=paste(wd,"/data/dataset_test2.csv", sep=""))
-write.csv(test3, file=paste(wd,"/data/dataset_test3.csv", sep=""))
-write.csv(test4, file=paste(wd,"/data/dataset_test4.csv", sep=""))
-write.csv(test5, file=paste(wd,"/data/dataset_test5.csv", sep=""))
+write.csv(testing1, file=paste(wd,"/data/dataset_testing1.csv", sep=""))
+write.csv(testing2, file=paste(wd,"/data/dataset_testing2.csv", sep=""))
+write.csv(testing3, file=paste(wd,"/data/dataset_testing3.csv", sep=""))
+write.csv(testing4, file=paste(wd,"/data/dataset_testing4.csv", sep=""))
+write.csv(testing5, file=paste(wd,"/data/dataset_testing5.csv", sep=""))
 
 
 
