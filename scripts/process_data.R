@@ -86,7 +86,7 @@ dat$ln_Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey <- log(dat$Summer_S
 dat$ln_Summer_Sablefish_CPUE_Juvenile_GOA_Survey <- log(dat$Summer_Sablefish_CPUE_Juvenile_GOA_Survey)
 
 dat$ln_Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery <- log(dat$Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery)
-dat$ln_plus_Annual_Heatwave_GOA_Model <- log(dat$Annual_Heatwave_GOA_Model)
+dat$ln_plus_Annual_Heatwave_GOA_Model <- log(dat$Annual_Heatwave_GOA_Model+1)
 
 #also incident catch in arrowtooth fishery and log + 1 of heatwave
 
@@ -195,16 +195,32 @@ write.csv(testing5, file=paste(wd,"/data/dataset_testing5.csv", sep=""))
 
 
 
+#create subsets without highly correlated indicators---------------
 
 
 
 
+temp.cov <- data.frame(t(z.ind.mat))
+temp.cov <- na.omit(temp.cov) #ONE covar is every second yr so this removes a lot, don't do to whole df
+
+cov.cor <- cor(temp.cov)
+#mfrow=c(1,1, oma=c(1,5,15,1))
+corrplot(cov.cor,order='AOE',  type = 'lower', method = 'number')
+corrplot.mixed(cov.cor, upper='circle', lower='number')
+
+corrplot(cov.cor,  type = 'lower', method = 'number')
+corrplot.mixed(cov.cor, upper='circle', lower='number')
 
 
+#missing data?
 
+scal_long <- pivot_longer(scaled_dat[,c(1,18:43)], -Year, names_to = "covar", values_to = "value")
 
+ggplot(scal_long, aes(Year, covar, size=value)) + geom_point()
 
-
+#sumr_euph_Kod_scaled
+#sumr_juv_CPUE_GOA_scaled #only every second yr but think people car about this one???
+#fem_evenness_scaled
 
 
 
