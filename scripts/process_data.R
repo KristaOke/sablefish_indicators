@@ -14,6 +14,7 @@ require(viridis)
 #require(R2jags)
 require(corrplot)
 require(reshape2)
+library(car)
 
 
 #=============================================================
@@ -87,6 +88,7 @@ dat$ln_Summer_Sablefish_CPUE_Juvenile_GOA_Survey <- log(dat$Summer_Sablefish_CPU
 
 dat$ln_Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery <- log(dat$Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery)
 dat$ln_plus_Annual_Heatwave_GOA_Model <- log(dat$Annual_Heatwave_GOA_Model+1)
+#heatwave gets log + 1 because it has a ton of zeros
 
 #also incident catch in arrowtooth fishery and log + 1 of heatwave
 
@@ -195,38 +197,357 @@ write.csv(testing5, file=paste(wd,"/data/dataset_testing5.csv", sep=""))
 
 
 
-#create subsets without highly correlated indicators---------------
+#missing data------------------------------------------------------
 
 
+#scaled only
+scaled_only <- scaled_dat[,c(1,18, 24:43)]
 
-
-temp.cov <- data.frame(t(z.ind.mat))
-temp.cov <- na.omit(temp.cov) #ONE covar is every second yr so this removes a lot, don't do to whole df
-
-cov.cor <- cor(temp.cov)
-#mfrow=c(1,1, oma=c(1,5,15,1))
-corrplot(cov.cor,order='AOE',  type = 'lower', method = 'number')
-corrplot.mixed(cov.cor, upper='circle', lower='number')
-
-corrplot(cov.cor,  type = 'lower', method = 'number')
-corrplot.mixed(cov.cor, upper='circle', lower='number')
-
-
-#missing data?
-
-scal_long <- pivot_longer(scaled_dat[,c(1,18:43)], -Year, names_to = "covar", values_to = "value")
+scal_long <- pivot_longer(scaled_only, -Year, names_to = "covar", values_to = "value")
 
 ggplot(scal_long, aes(Year, covar, size=value)) + geom_point()
 
-#sumr_euph_Kod_scaled
-#sumr_juv_CPUE_GOA_scaled #only every second yr but think people car about this one???
-#fem_evenness_scaled
+
+#create subsets without highly correlated indicators---------------
+
+#let's check for highly correlated indicators in steps
+#first, let's look at all indicators EXCEPT Smr_euph_abun_Kod_scaled, only n=7, and 
+#Smr_CPUE_juv_GOA_ln_scaled which is every 2nd yr
+
+sub1 <- scaled_only[,-c(1,13,16)]
+cov1 <- na.omit(sub1)
+
+cov.cor1 <- cor(cov1)
+corrplot(cov.cor1,order='AOE',  type = 'lower', method = 'number')
+corrplot.mixed(cov.cor1, upper='circle', lower='number')
+
+#overwhelming! Let's break apart
+
+subsub1 <- sub1[,c(1:9)]
+subsub1.2 <- sub1[,c(1,10:19)]
+
+covsub1 <- na.omit(subsub1)
+covsub1.2 <- na.omit(subsub1.2)
+
+cov.cor1.1 <- cor(covsub1)
+corrplot(cov.cor1.1,order='AOE',  type = 'lower', method = 'number')
+corrplot.mixed(cov.cor1.1, upper='circle', lower='number')
+
+#problem pairs
+#"ann_heatwave_GOA_scaled"  + "Spr_ST_SEBS_scaled"    
+#"Spr_ST_GOA_scaled"   + "Spr_ST_SEBS_scaled"         
+# "ann_heatwave_GOA_scaled"  + "Spr_ST_GOA_scaled"
+
+
+cov.cor1.2 <- cor(covsub1.2)
+corrplot(cov.cor1.2,order='AOE',  type = 'lower', method = 'number')
+corrplot.mixed(cov.cor1.2, upper='circle', lower='number')
+
+#problem pairs
+#sablefish_bycatch_arrowtooth_fishery_scaled + arrowtooth_biomass_scaled
+#sablefish_bycatch_arrowtooth_fishery_scaled + Smr_CPUE_juv_ADFG_ln_scaled
+
+#ann_Copepod_size_EGOA_scaled + Spr_ST_SEBS_scaled
+#ann_Copepod_size_EGOA_scaled + ann_heatwave_GOA_scaled
+#ann_Copepod_size_EGOA_scaled + Spr_ST_GOA_scaled
+
+#YOY_grwth_Middleton_scaled + Spr_ST_SEBS_scaled
+#YOY_grwth_Middleton_scaled + Spr_ST_GOA_scaled
+
+#sablefish_bycatch_arrowtooth_fishery_scaled + arrowtooth_biomass_scaled
+#sablefish_bycatch_arrowtooth_fishery_scaled + Smr_CPUE_juv_ADFG_ln_scaled
+#Smr_CPUE_juv_ADFG_ln_scaled + arrowtooth_biomass_scaled
+
+#remove model derived problem indicators
+sub3 <- sub1[,-c(14:15)]
+cov3 <- na.omit(sub3)
+
+cov.cor3 <- cor(cov3)
+corrplot(cov.cor3,order='AOE',  type = 'lower', method = 'number')
+corrplot.mixed(cov.cor3, upper='circle', lower='number')
+
+
+#drop those selected for removal
+
+sub2 <- scaled_only[,-c(1,4:5,11,13,16,17:18,20:21)]
+cov2 <- na.omit(sub2)
+
+cov.cor2 <- cor(cov2)
+corrplot(cov.cor2,order='AOE',  type = 'lower', method = 'number')
+corrplot.mixed(cov.cor2, upper='circle', lower='number')
+
+#add juv GOA CPUE back in
+
+sub3 <- scaled_only[,-c(1,4:5,11,13,17:18,20:21)]
+cov3 <- na.omit(sub3)
+
+cov.cor3 <- cor(cov3)
+corrplot(cov.cor3,order='AOE',  type = 'lower', method = 'number')
+corrplot.mixed(cov.cor3, upper='circle', lower='number')
+#BAD
+
+#try only good ones
+noncor_only <- scaled_only[,-c(1,4:5,11,13,16,17:18,20:21)]
+cov4 <- na.omit(noncor_only)
+
+cov.cor4 <- cor(cov4)
+corrplot(cov.cor4,order='AOE',  type = 'lower', method = 'number')
+corrplot.mixed(cov.cor4, upper='circle', lower='number')
+
+#VIFs-------------------------
+
+vmod <- lm(ln_rec ~ ann_heatwave_GOA_scaled  + #Spr_ST_GOA_scaled +                
+           # Spr_ST_SEBS_scaled +
+             Smr_temp_250m_GOA_scaled  + 
+            Spr_chlA_biom_GOA_scaled +  Spr_chlA_biom_SEBS_scaled    +  
+           Spr_chlA_peak_GOA_scaled  + Spr_chlA_peak_SEBS_scaled    +  
+           # ann_Copepod_size_EGOA_scaled  +  
+             ann_Copepod_size_WGOA_scaled   +    
+           # Smr_euph_abun_Kod_scaled  +  
+             YOY_grwth_Middleton_scaled  +     
+            Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
+            #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
+            Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+           # sablefish_bycatch_arrowtooth_fishery_scaled + 
+             smr_adult_cond_scaled , data=scaled_only)
+
+
+vifs <- car::vif(vmod) #ALL BAD?!
+
+#drop worst first, that's Spr_chlA_biom_GOA_scaled  at 31
+
+vmod2 <- lm(ln_rec ~ ann_heatwave_GOA_scaled  + #Spr_ST_GOA_scaled +                
+             # Spr_ST_SEBS_scaled +
+             Smr_temp_250m_GOA_scaled  + 
+            # Spr_chlA_biom_GOA_scaled +  
+              Spr_chlA_biom_SEBS_scaled    +  
+             Spr_chlA_peak_GOA_scaled  + Spr_chlA_peak_SEBS_scaled    +  
+             # ann_Copepod_size_EGOA_scaled  +  
+             ann_Copepod_size_WGOA_scaled   +    
+             # Smr_euph_abun_Kod_scaled  +  
+             YOY_grwth_Middleton_scaled  +     
+             Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
+             #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
+             Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+             # sablefish_bycatch_arrowtooth_fishery_scaled + 
+             smr_adult_cond_scaled , data=scaled_only)
+
+
+vifs2 <- car::vif(vmod2) #better! Still some above 5
+
+#would it be better to drop SEBS?
+
+vmod3 <- lm(ln_rec ~ ann_heatwave_GOA_scaled  + #Spr_ST_GOA_scaled +                
+              # Spr_ST_SEBS_scaled +
+              Smr_temp_250m_GOA_scaled  + 
+               Spr_chlA_biom_GOA_scaled +  
+              #Spr_chlA_biom_SEBS_scaled    +  
+              Spr_chlA_peak_GOA_scaled  + Spr_chlA_peak_SEBS_scaled    +  
+              # ann_Copepod_size_EGOA_scaled  +  
+              ann_Copepod_size_WGOA_scaled   +    
+              # Smr_euph_abun_Kod_scaled  +  
+              YOY_grwth_Middleton_scaled  +     
+              Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
+              #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
+              Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+              # sablefish_bycatch_arrowtooth_fishery_scaled + 
+              smr_adult_cond_scaled , data=scaled_only)
+
+
+vifs3 <- car::vif(vmod3) #higher than when GOA chlA was dropped
+
+#if we follow up dropping GOA chlA next would be Spr_chlA_peak_GOA_scaled
+
+vmod4 <- lm(ln_rec ~ ann_heatwave_GOA_scaled  + #Spr_ST_GOA_scaled +                
+              # Spr_ST_SEBS_scaled +
+              Smr_temp_250m_GOA_scaled  + 
+              # Spr_chlA_biom_GOA_scaled +  
+              Spr_chlA_biom_SEBS_scaled    +  
+              #Spr_chlA_peak_GOA_scaled  + 
+              Spr_chlA_peak_SEBS_scaled    +  
+              # ann_Copepod_size_EGOA_scaled  +  
+              ann_Copepod_size_WGOA_scaled   +    
+              # Smr_euph_abun_Kod_scaled  +  
+              YOY_grwth_Middleton_scaled  +     
+              Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
+              #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
+              Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+              # sablefish_bycatch_arrowtooth_fishery_scaled + 
+              smr_adult_cond_scaled , data=scaled_only)
+
+
+vifs4 <- car::vif(vmod4) #now they're all good
+
+#but what if we dropped the SEBS chlA-biom indicator instead since juvs should mostly be in GOA?
+#next to drop would have been Spr_chlA_biom_GOA_scaled
+
+vmod5 <- lm(ln_rec ~ ann_heatwave_GOA_scaled  + #Spr_ST_GOA_scaled +                
+              # Spr_ST_SEBS_scaled +
+              Smr_temp_250m_GOA_scaled  + 
+               Spr_chlA_biom_GOA_scaled +  
+              #Spr_chlA_biom_SEBS_scaled    +  
+             # Spr_chlA_peak_GOA_scaled  + 
+              Spr_chlA_peak_SEBS_scaled    +  
+              # ann_Copepod_size_EGOA_scaled  +  
+              ann_Copepod_size_WGOA_scaled   +    
+              # Smr_euph_abun_Kod_scaled  +  
+              YOY_grwth_Middleton_scaled  +     
+              Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
+              #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
+              Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+              # sablefish_bycatch_arrowtooth_fishery_scaled + 
+              smr_adult_cond_scaled , data=scaled_only)
+
+
+vifs5 <- car::vif(vmod5) #Spr_chlA_biom_GOA_scaled still bad
+
+
+
+#REPEAT with SEBS SST instead of heatwave since we know the latter might be an issue
+
+
+vsebsmod <- lm(ln_rec ~ #ann_heatwave_GOA_scaled  + 
+                 Spr_ST_GOA_scaled +                
+             # Spr_ST_SEBS_scaled +
+             Smr_temp_250m_GOA_scaled  + 
+             Spr_chlA_biom_GOA_scaled +  Spr_chlA_biom_SEBS_scaled    +  
+             Spr_chlA_peak_GOA_scaled  + Spr_chlA_peak_SEBS_scaled    +  
+             # ann_Copepod_size_EGOA_scaled  +  
+             ann_Copepod_size_WGOA_scaled   +    
+             # Smr_euph_abun_Kod_scaled  +  
+             YOY_grwth_Middleton_scaled  +     
+             Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
+             #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
+             Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+             # sablefish_bycatch_arrowtooth_fishery_scaled + 
+             smr_adult_cond_scaled , data=scaled_only)
+
+
+vifsebs <- car::vif(vsebsmod) #ALL BAD?!
+
+#drop worst which is Spr_chlA_biom_GOA_scaled at 21
+
+
+vsebsmod2 <- lm(ln_rec ~ #ann_heatwave_GOA_scaled  + 
+                 Spr_ST_GOA_scaled +                
+                 # Spr_ST_SEBS_scaled +
+                 Smr_temp_250m_GOA_scaled  + 
+                 #Spr_chlA_biom_GOA_scaled +  
+                  Spr_chlA_biom_SEBS_scaled    +  
+                 Spr_chlA_peak_GOA_scaled  + Spr_chlA_peak_SEBS_scaled    +  
+                 # ann_Copepod_size_EGOA_scaled  +  
+                 ann_Copepod_size_WGOA_scaled   +    
+                 # Smr_euph_abun_Kod_scaled  +  
+                 YOY_grwth_Middleton_scaled  +     
+                 Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
+                 #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
+                 Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+                 # sablefish_bycatch_arrowtooth_fishery_scaled + 
+                 smr_adult_cond_scaled , data=scaled_only)
+
+
+vifsebs2 <- car::vif(vsebsmod2)
+
+#drop next worst, Spr_chlA_peak_GOA_scaled
+
+vsebsmod3 <- lm(ln_rec ~ #ann_heatwave_GOA_scaled  + 
+                  Spr_ST_GOA_scaled +                
+                  # Spr_ST_SEBS_scaled +
+                  Smr_temp_250m_GOA_scaled  + 
+                  #Spr_chlA_biom_GOA_scaled +  
+                  Spr_chlA_biom_SEBS_scaled    +  
+                 # Spr_chlA_peak_GOA_scaled  + 
+                  Spr_chlA_peak_SEBS_scaled    +  
+                  # ann_Copepod_size_EGOA_scaled  +  
+                  ann_Copepod_size_WGOA_scaled   +    
+                  # Smr_euph_abun_Kod_scaled  +  
+                  YOY_grwth_Middleton_scaled  +     
+                  Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
+                  #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
+                  Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+                  # sablefish_bycatch_arrowtooth_fishery_scaled + 
+                  smr_adult_cond_scaled , data=scaled_only)
+
+
+vifsebs3 <- car::vif(vsebsmod3) #close enough! Some round down to 5 from 5.3
+
+#what if we removed the sebs chlrA instead
+vsebsmod4 <- lm(ln_rec ~ #ann_heatwave_GOA_scaled  + 
+                  Spr_ST_GOA_scaled +                
+                  # Spr_ST_SEBS_scaled +
+                  Smr_temp_250m_GOA_scaled  + 
+                  Spr_chlA_biom_GOA_scaled +  
+                  #Spr_chlA_biom_SEBS_scaled    +  
+                  Spr_chlA_peak_GOA_scaled  + Spr_chlA_peak_SEBS_scaled    +  
+                  # ann_Copepod_size_EGOA_scaled  +  
+                  ann_Copepod_size_WGOA_scaled   +    
+                  # Smr_euph_abun_Kod_scaled  +  
+                  YOY_grwth_Middleton_scaled  +     
+                  Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
+                  #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
+                  Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+                  # sablefish_bycatch_arrowtooth_fishery_scaled + 
+                  smr_adult_cond_scaled , data=scaled_only)
+
+
+vifsebs4 <- car::vif(vsebsmod4)
+
+#next would be Spr_chlA_peak_GOA_scaled at 9.3
+
+vsebsmod5 <- lm(ln_rec ~ #ann_heatwave_GOA_scaled  + 
+                  Spr_ST_GOA_scaled +                
+                  # Spr_ST_SEBS_scaled +
+                  Smr_temp_250m_GOA_scaled  + 
+                  Spr_chlA_biom_GOA_scaled +  
+                  #Spr_chlA_biom_SEBS_scaled    +  
+                  #Spr_chlA_peak_GOA_scaled  + 
+                  Spr_chlA_peak_SEBS_scaled    +  
+                  # ann_Copepod_size_EGOA_scaled  +  
+                  ann_Copepod_size_WGOA_scaled   +    
+                  # Smr_euph_abun_Kod_scaled  +  
+                  YOY_grwth_Middleton_scaled  +     
+                  Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
+                  #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
+                  Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+                  # sablefish_bycatch_arrowtooth_fishery_scaled + 
+                  smr_adult_cond_scaled , data=scaled_only)
+
+
+vifsebs5 <- car::vif(vsebsmod5) #also fine
+
+
+#now automate the process
 
 
 
 
 
+#uncentered vifs?-------
 
+vif.lm <- function(object, ...) {
+  V <- summary(object)$cov.unscaled
+  Vi <- crossprod(model.matrix(object))
+  nam <- names(coef(object))
+  k <- match("(Intercept)", nam,
+             nomatch = FALSE)
+  v1 <- diag(V)
+  v2 <- diag(Vi)
+  uc.struct <- structure(v1 * v2, names = nam)
+  if(k) {
+    v1 <- diag(V)[-k]
+    v2 <- diag(Vi)[-k] - Vi[k, -k]^2 / Vi[k, k]
+    nam <- nam[-k]
+    c.struct <- structure(v1 * v2, names = nam)
+  
+           return(c(Centered.VIF = c.struct, Uncentered.VIF = uc.struct))
+  }
+  else{
+    warning(paste("No intercept term",
+                  "detected. Uncentered VIFs computed."))
+    return(Uncentered.VIF = uc.struct)
+  }
+}
 
-
-
+vif.lm(vmod) #also picks Spr_chlA_biom_GOA_scaled
+#after dropping that one
+vif.lm(vmod2) #all under 10
