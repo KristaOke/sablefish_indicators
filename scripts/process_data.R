@@ -97,7 +97,7 @@ dat <- dat[,-c("Summer_Sablefish_CPUE_Juvenile_GOA_Survey",
                "Recruitment_year_class")]
 
 #not working let's brute force it for now, 
-#RETURN TO THIS
+#RETURN TO THIS use %in% like below
 dat <- dat[,c(1, 4:14, 17:20, 22:27)]
 
 
@@ -518,9 +518,18 @@ vifsebs5 <- car::vif(vsebsmod5) #also fine
 
 #now automate the process
 
+response <-  "ln_rec"
+explanatory_vars <- colnames(noncor_only[,!names(noncor_only) %in% c("Year", "ln_rec")])
 
+form.vars <- paste(explanatory_vars, collapse=" + ")
+form <- paste(response, "~",form.vars)
 
+vif_mod <- lm(formula = form, data=noncor_only)
+vif1 <- car::vif(vif_mod)
+vif1df <- as.data.frame(vif1)
 
+vif1ordered <- order(vif1df[,1]) #none of this is working!!!
+highest <- rownames(vif1df[which(vif1df[,1]==max(vif1df)),] )
 
 #uncentered vifs?-------
 
