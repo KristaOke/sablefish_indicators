@@ -86,24 +86,20 @@ log.hist
 dat$ln_Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey <- log(dat$Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey)
 dat$ln_Summer_Sablefish_CPUE_Juvenile_GOA_Survey <- log(dat$Summer_Sablefish_CPUE_Juvenile_GOA_Survey)
 
+#also incident catch in arrowtooth fishery and log + 1 of heatwave
 dat$ln_Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery <- log(dat$Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery)
 dat$ln_plus_Annual_Heatwave_GOA_Model <- log(dat$Annual_Heatwave_GOA_Model+1)
 #heatwave gets log + 1 because it has a ton of zeros
 
-#also incident catch in arrowtooth fishery and log + 1 of heatwave
-
-dat <- dat[,-c("Summer_Sablefish_CPUE_Juvenile_GOA_Survey",
-               "Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey",
-               "Recruitment_year_class")]
-
-#not working let's brute force it for now, 
-#RETURN TO THIS use %in% like below
-dat <- dat[,c(1, 4:14, 17:20, 22:27)]
+#remove columns that have now been lagged
+dat <- dat[,!names(dat) %in% c("Summer_Sablefish_CPUE_Juvenile_GOA_Survey",
+                                        "Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey",
+                                        "Recruitment_year_class",
+                                        "Annual_Heatwave_GOA_Model",
+                                        "Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery")]
 
 
 covar.noR <- dat %>% gather(key=type, value=value, -c(Year, ln_rec))
-
-
 
 
 ln.rec.plot <- ggplot(covar.noR, aes(y=ln_rec, x=value, fill=type)) +
@@ -153,33 +149,70 @@ scaled_dat <- dat %>% #group_by(Year) %>%
          smr_adult_cond_scaled=scale(Summer_Sablefish_Condition_Female_Adult_GOA_Survey))
 
 
-
 #split data======
 
 #NEED TO SUBSET out a training dataset
-#do this five times so it can be repeated
-datlen <- length(scaled_dat$recruit_scaled)
-train1 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
-train1 <- train1[order(row.names(train1)),]
-testing1 <- anti_join(scaled_dat, train1)
 
+#do this five times so it can be repeated
+#get sample size (n years)
+datlen <- length(scaled_dat$recruit_scaled)
+
+#randomly get seeds
+seeds <- sample(1:datlen, 5)
+#MY SEEDS are 31, 1, 20, 35, 3
+seeds <- c(31,1,20,35,3)
+
+set.seed(seeds[1])
+train1 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),] #sample 80% of data 
+train1 <- train1[order(as.numeric(row.names(train1))),] #re-order to correct order of years
+testing1 <- anti_join(scaled_dat, train1) #remaining rows become testing data
+
+set.seed(seeds[2])
 train2 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
-train2 <- train2[order(row.names(train2)),]
+train2 <- train2[order(as.numeric(row.names(train2))),]
 testing2 <- anti_join(scaled_dat, train2)
 
+set.seed(seeds[3])
 train3 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
-train3 <- train3[order(row.names(train3)),]
+train3 <- train3[order(as.numeric(row.names(train3))),]
 testing3 <- anti_join(scaled_dat, train3)
 
+set.seed(seeds[4])
 train4 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
-train4 <- train4[order(row.names(train4)),]
+train4 <- train4[order(as.numeric(row.names(train4))),]
 testing4 <- anti_join(scaled_dat, train4)
 
+set.seed(seeds[5])
 train5 <- scaled_dat[sample(nrow(scaled_dat),(round(datlen*0.8))),]
-train5 <- train5[order(row.names(train5)),]
+train5 <- train5[order(as.numeric(row.names(train5))),]
 testing5 <- anti_join(scaled_dat, train5)
 
-#save this training set?
+#let's plot these to look at which years get included
+
+yrs1 <- as.data.frame(train1$Year)
+colnames(yrs1) <- "Year"
+yrs1$set <- 1
+
+yrs2 <- as.data.frame(train2$Year)
+colnames(yrs2) <- "Year"
+yrs2$set <- 2
+
+yrs3 <- as.data.frame(train3$Year)
+colnames(yrs3) <- "Year"
+yrs3$set <- 3
+
+yrs4 <- as.data.frame(train4$Year)
+colnames(yrs4) <- "Year"
+yrs4$set <- 4
+
+yrs5 <- as.data.frame(train5$Year)
+colnames(yrs5) <- "Year"
+yrs5$set <- 5
+
+yrs_df <- rbind(yrs1, yrs2, yrs3, yrs4, yrs5)
+yrs_df$set <- as.factor(yrs_df$set)
+
+ggplot(yrs_df, aes(Year, set)) + geom_point()
 
 #save analysis-ready data======
 
