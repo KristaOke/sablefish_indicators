@@ -107,7 +107,7 @@ z.mat1 <- z.mat1[-1,]
 # now fit DFA models with 1-3 trends and different error structures and compare
 
 # changing convergence criterion to ensure convergence
-cntl.list = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
+cntl.list = list(minit=200, maxit=30000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
 # set up forms of R matrices
 levels.R = c("diagonal and equal",
@@ -151,10 +151,10 @@ model.data1
 
 # now fit best model
 
-model.list.1 = list(A="zero", m=2, R="diagonal and unequal") # best model by a little
+model.list.1 = list(A="zero", m=1, R="diagonal and unequal") # best model by a little
 cntl.list1 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 model.1 = MARSS(z.mat1, model=model.list.1, z.score=TRUE, form="dfa", control=cntl.list1)
-
+#not working yet, convergence issues
 
 
 # and rotate the loadings
