@@ -246,6 +246,12 @@ train3_brt_dat <- train3[,names(train3) %in% noncor_covars]
 train4_brt_dat <- train4[,names(train4) %in% noncor_covars]
 train5_brt_dat <- train5[,names(train5) %in% noncor_covars]
 
+test1_brt_dat <- testing1[,names(testing1) %in% noncor_covars]
+test2_brt_dat <- testing2[,names(testing2) %in% noncor_covars]
+test3_brt_dat <- testing3[,names(testing3) %in% noncor_covars]
+test4_brt_dat <- testing4[,names(testing4) %in% noncor_covars]
+test5_brt_dat <- testing5[,names(testing5) %in% noncor_covars]
+
 #BRT cannot include NAs in response variable
 #these are often at the END of the time series
 
@@ -255,11 +261,11 @@ train3_brt_dat <- train3_brt_dat[which(is.na(train3_brt_dat$ln_rec)==FALSE),]
 train4_brt_dat <- train4_brt_dat[which(is.na(train4_brt_dat$ln_rec)==FALSE),]
 train5_brt_dat <- train5_brt_dat[which(is.na(train5_brt_dat$ln_rec)==FALSE),]
 
-test1_brt_dat <- testing1[which(is.na(testing1$ln_rec)==FALSE),]
-test2_brt_dat <- testing2[which(is.na(testing2$ln_rec)==FALSE),]
-test3_brt_dat <- testing3[which(is.na(testing3$ln_rec)==FALSE),]
-test4_brt_dat <- testing4[which(is.na(testing4$ln_rec)==FALSE),]
-test5_brt_dat <- testing5[which(is.na(testing5$ln_rec)==FALSE),]
+test1_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
+test2_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
+test3_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
+test4_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
+test5_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
 
 
 
@@ -292,27 +298,26 @@ gbm.simplify(real.fit.1, n.drops = 3) #error that nTrain * bag.fraction <= n.min
 gbm.interactions(real.fit.1)
 perf_n <- gbm.perf(real.fit.1)[1] #optimal # trees 264 but that's pretty low
 
-preds <- predict.gbm(real.fit.1, testing1, n.trees = perf_n, type="response")
+preds <- predict.gbm(real.fit.1, test1_brt_dat, n.trees = perf_n, type="response")
 
-dev <- calc.deviance(obs=testing1$recruit_scaled, pred=testing1$predictions, family="gaussian", 
+dev <- calc.deviance(obs=test1_brt_dat$ln_rec, pred=test1_brt_dat$predictions, family="gaussian", 
                      calc.mean=TRUE)
 
 
-testing$predictions <- preds
-ggplot(testing, aes(predictions, recruit_scaled)) + geom_point() + geom_abline()
+test1_brt_dat$predictions <- preds
+ggplot(test1_brt_dat, aes(predictions, ln_rec)) + geom_point() + geom_abline()
 
-sum_squared_errors <- sum((preds-testing$recruit_scaled)^2, na.rm=TRUE)
+sum_squared_errors <- sum((preds-test1_brt_dat$ln_rec)^2, na.rm=TRUE)
 
 
 #try different interaction depths, compare SSE
-#loop isn't working yet
 (IntDepthG <- sapply(1:8, function(x) {
   # fit model
-  mod_boost <- gbm.step(gbm.y=res, gbm.x=fit.covars,
-                        data = train,
+  mod_boost <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
+                        data = train1_brt_dat,
                         family = "gaussian",                       
                         tree.complexity = 1, #b/c very small sample
-                        learning.rate = 0.005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                        learning.rate = 0.00005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
                         bag.fraction = 0.8,
                         n.minobsinnode=1,
                         n.folds = 5,
@@ -320,23 +325,125 @@ sum_squared_errors <- sum((preds-testing$recruit_scaled)^2, na.rm=TRUE)
   # calculate best value for number of trees
   bestHit <- gbm.perf(mod_boost)[1]
   # calculate the sum of squared errors
-  boostSSE <- sum((predict(mod_boost, testing, n.trees = bestHit) - testing$recruit_scaled)^2,
+  boostSSE <- sum((predict(mod_boost, test1_brt_dat, n.trees = bestHit) - test1_brt_dat$ln_rec)^2,
                   na.rm = TRUE)
   return(boostSSE)}))
 
+#changing interaction depth doesn't make big difference, depth of 2 is best at 5.264870 but
+#not much different than the original sse at 5.266896
+
+
+
+#try different folds
+(foldsG <- sapply(5:10, function(x) {
+  # fit model
+  mod_boost <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
+                        data = train1_brt_dat,
+                        family = "gaussian",                       
+                        tree.complexity = 1, #b/c very small sample
+                        learning.rate = 0.000005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                        bag.fraction = 0.8,
+                        n.minobsinnode=1,
+                        n.folds = x,
+                        interaction.depth=2)
+  # calculate best value for number of trees
+  bestHit <- gbm.perf(mod_boost)[1]
+  # calculate the sum of squared errors
+  boostSSE <- sum((predict(mod_boost, test1_brt_dat, n.trees = bestHit) - test1_brt_dat$ln_rec)^2,
+                  na.rm = TRUE)
+  return(boostSSE)}))
+#under 5 folds won't run
+#5 to 10 folds makes almost no difference
 
 
 
 
 
+#REPEAT ON SEBS NOT HEATWAVE=====
+
+
+train1_brt_dat <- train1[,names(train1) %in% noncor_covars2]
+train2_brt_dat <- train2[,names(train2) %in% noncor_covars2]
+train3_brt_dat <- train3[,names(train3) %in% noncor_covars2]
+train4_brt_dat <- train4[,names(train4) %in% noncor_covars2]
+train5_brt_dat <- train5[,names(train5) %in% noncor_covars2]
+
+test1_brt_dat <- testing1[,names(testing1) %in% noncor_covars2]
+test2_brt_dat <- testing2[,names(testing2) %in% noncor_covars2]
+test3_brt_dat <- testing3[,names(testing3) %in% noncor_covars2]
+test4_brt_dat <- testing4[,names(testing4) %in% noncor_covars2]
+test5_brt_dat <- testing5[,names(testing5) %in% noncor_covars2]
+
+#BRT cannot include NAs in response variable
+#these are often at the END of the time series
+
+train1_brt_dat <- train1_brt_dat[which(is.na(train1_brt_dat$ln_rec)==FALSE),]
+train2_brt_dat <- train2_brt_dat[which(is.na(train2_brt_dat$ln_rec)==FALSE),]
+train3_brt_dat <- train3_brt_dat[which(is.na(train3_brt_dat$ln_rec)==FALSE),]
+train4_brt_dat <- train4_brt_dat[which(is.na(train4_brt_dat$ln_rec)==FALSE),]
+train5_brt_dat <- train5_brt_dat[which(is.na(train5_brt_dat$ln_rec)==FALSE),]
+
+test1_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
+test2_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
+test3_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
+test4_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
+test5_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
 
 
 
+# Fit BRT Model ======================================================
+# if(fit==TRUE) {
+
+res1 <- "ln_rec"
+
+fit.covars <- names(train1_brt_dat[,!names(train1_brt_dat) %in% c("Year", "ln_rec")]) 
+
+form.covars <- paste(fit.covars, collapse=" + ")
+form <- paste(res1, "~",form.covars)
 
 
+#fit BRT on training set 1-----
+
+#see goood tutorial on https://afit-r.github.io/tree_based_methods
+
+real.fit.1 <- gbm.step(data=train1_brt_dat, gbm.y=res1, gbm.x=fit.covars, family='gaussian', 
+                       #real.fit.1 <- gbm.step(data=train, gbm.y=10, gbm.x=11:18, family='gaussian', 
+                       tree.complexity = 1, #b/c very small sample
+                       learning.rate = 0.005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                       bag.fraction = 0.8,
+                       n.minobsinnode=1) #won't run with bag fraction lower than 0.8 for training dataset of 34 years
+gbm.plot(real.fit.1)
+gbm.plot.fits(real.fit.1)
+gbm.perspec(real.fit.1, x=1, y=8) #not working
+summary(real.fit.1)
+gbm.simplify(real.fit.1, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
+gbm.interactions(real.fit.1)
+perf_n <- gbm.perf(real.fit.1)[1] #optimal # trees 264 but that's pretty low
+
+preds <- predict.gbm(real.fit.1, test1_brt_dat, n.trees = perf_n, type="response")
+
+dev <- calc.deviance(obs=test1_brt_dat$ln_rec, pred=test1_brt_dat$predictions, family="gaussian", 
+                     calc.mean=TRUE)
 
 
+test1_brt_dat$predictions <- preds
+ggplot(test1_brt_dat, aes(predictions, ln_rec)) + geom_point() + geom_abline()
 
+sum_squared_errors <- sum((preds-test1_brt_dat$ln_rec)^2, na.rm=TRUE)
 
+ggplot(train1_brt_dat, aes(Spr_ST_SEBS_scaled, ln_rec, col=as.factor(Year))) + geom_point()
+ggplot(train1_brt_dat, aes(Spr_ST_SEBS_scaled, ln_rec, col=as.factor(Year))) + geom_point() +geom_text(aes(Spr_ST_SEBS_scaled, ln_rec,label=Year))
 
+ggplot(train1_brt_dat, aes(Spr_ST_SEBS_scaled, Smr_CPUE_juv_ADFG_ln_scaled, col=ln_rec)) + geom_point() +geom_text(aes(Spr_ST_SEBS_scaled, Smr_CPUE_juv_ADFG_ln_scaled,label=Year))
 
+ggplot(train1_brt_dat, aes(Smr_CPUE_juv_ADFG_ln_scaled, ln_rec)) + geom_point()
+
+ggplot(train1_brt_dat, aes(Smr_temp_250m_GOA_scaled, ln_rec)) + geom_point()
+
+ggplot(train1_brt_dat, aes(Year, Smr_temp_250m_GOA_scaled)) + geom_point()
+
+ggplot(train1, aes(ann_heatwave_GOA_scaled, Smr_CPUE_juv_ADFG_ln_scaled, col=ln_rec)) + geom_point() +geom_text(aes(ann_heatwave_GOA_scaled, Smr_CPUE_juv_ADFG_ln_scaled,label=Year))
+
+ggplot(train1, aes(ann_heatwave_GOA_scaled, ln_rec)) + geom_point() +geom_text(aes(ann_heatwave_GOA_scaled, ln_rec,label=Year))
+
+ggplot(train1, aes(ann_heatwave_GOA_scaled, Spr_ST_SEBS_scaled, col=ln_rec)) + geom_point()
