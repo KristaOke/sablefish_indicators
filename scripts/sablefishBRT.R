@@ -24,37 +24,50 @@ dir.figs <- file.path(wd,"figs")
 
 #Get data plot data =======
 
-dat <- read.csv(file.path(dir.data, "sablefish_BAS_indicators_2022.csv"))
+#dat <- read.csv(file.path(dir.data, "sablefish_BAS_indicators_2022.csv"))
 
-scaled_dat <- dat %>% #group_by(Year) %>%
-  mutate(recruit_scaled=scale(Recruitment),
-         Spr_ST_SEBS_scaled=scale(Spring_Temperature_Surface_SEBS_Satellite),
-         YOY_grwth_Middleton_scaled=scale(Annual_Sablefish_Growth_YOY_Middleton_Survey),
-         Smr_CPUE_juv_ADFG_scaled=scale(Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey),
-         spawner_mean_age_scaled=scale(Annual_Sablefish_Mean_Age_Female_Adult_Model),
-         spawner_age_evenness_scaled=scale(Annual_Sablefish_Age_Evenness_Female_Adult_Model),
-         arrowtooth_biomass_scaled=scale(Annual_Arrowtooth_Biomass_GOA_Model),
-         sablefish_bycatch_arrowtooth_fishery_scaled=scale(Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery),
-         smr_adult_cond_scaled=scale(Summer_Sablefish_Condition_Female_Adult_GOA_Survey))
-
-brtdat <- scaled_dat
-brtdat <- brtdat[is.na(brtdat$recruit_scaled)==FALSE,] #remove NAs from residuals
-
-
-#NEED TO SUBSET out a training dataset
-datlen <- length(brtdat$recruit_scaled)
-train <- brtdat[sample(nrow(brtdat),(round(datlen*0.8))),]
-train <- train[order(row.names(train)),]
-
-testing <- anti_join(brtdat, train)
-
-#save this training set?
-
-rownames(train) <- train[,1]
-train <- train[,-1]
-
-rownames(testing) <- testing[,1]
-testing <- testing[,-1]
+# train1 <- read.csv(file=paste(wd,"/data/dataset_training1.csv", sep=""))
+# train2 <- read.csv(file=paste(wd,"/data/dataset_training2.csv", sep=""))
+# train3 <- read.csv(file=paste(wd,"/data/dataset_training3.csv", sep=""))
+# train4 <- read.csv(file=paste(wd,"/data/dataset_training4.csv", sep=""))
+# train5 <- read.csv(file=paste(wd,"/data/dataset_training5.csv", sep=""))
+# 
+# testing1 <- read.csv(file=paste(wd,"/data/dataset_testing1.csv", sep=""))
+# testing2 <- read.csv(file=paste(wd,"/data/dataset_testing2.csv", sep=""))
+# testing3 <- read.csv(file=paste(wd,"/data/dataset_testing3.csv", sep=""))
+# testing4 <- read.csv(file=paste(wd,"/data/dataset_testing4.csv", sep=""))
+# testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""))
+# 
+# 
+# scaled_dat <- dat %>% #group_by(Year) %>%
+#   mutate(recruit_scaled=scale(Recruitment),
+#          Spr_ST_SEBS_scaled=scale(Spring_Temperature_Surface_SEBS_Satellite),
+#          YOY_grwth_Middleton_scaled=scale(Annual_Sablefish_Growth_YOY_Middleton_Survey),
+#          Smr_CPUE_juv_ADFG_scaled=scale(Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey),
+#          spawner_mean_age_scaled=scale(Annual_Sablefish_Mean_Age_Female_Adult_Model),
+#          spawner_age_evenness_scaled=scale(Annual_Sablefish_Age_Evenness_Female_Adult_Model),
+#          arrowtooth_biomass_scaled=scale(Annual_Arrowtooth_Biomass_GOA_Model),
+#          sablefish_bycatch_arrowtooth_fishery_scaled=scale(Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery),
+#          smr_adult_cond_scaled=scale(Summer_Sablefish_Condition_Female_Adult_GOA_Survey))
+# 
+# brtdat <- scaled_dat
+# brtdat <- brtdat[is.na(brtdat$recruit_scaled)==FALSE,] #remove NAs from residuals
+# 
+# 
+# #NEED TO SUBSET out a training dataset
+# datlen <- length(brtdat$recruit_scaled)
+# train <- brtdat[sample(nrow(brtdat),(round(datlen*0.8))),]
+# train <- train[order(row.names(train)),]
+# 
+# testing <- anti_join(brtdat, train)
+# 
+# #save this training set?
+# 
+# rownames(train) <- train[,1]
+# train <- train[,-1]
+# 
+# rownames(testing) <- testing[,1]
+# testing <- testing[,-1]
 
 
 #Combine matrices
@@ -195,3 +208,135 @@ gbm.perspec(real.fit.2, x=1, y=2) #not working
 summary(real.fit.2)
 gbm.simplify(real.fit.2, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
 gbm.interactions(real.fit.2) #interactions continue to not work
+
+
+
+#NEW========================================================================================================
+
+#Get data=======
+
+# load data that is already z-scored, checked for correlations
+
+train1 <- read.csv(file=paste(wd,"/data/dataset_training1.csv", sep=""), row.names = 1)
+train2 <- read.csv(file=paste(wd,"/data/dataset_training2.csv", sep=""), row.names = 1)
+train3 <- read.csv(file=paste(wd,"/data/dataset_training3.csv", sep=""), row.names = 1)
+train4 <- read.csv(file=paste(wd,"/data/dataset_training4.csv", sep=""), row.names = 1)
+train5 <- read.csv(file=paste(wd,"/data/dataset_training5.csv", sep=""), row.names = 1)
+
+testing1 <- read.csv(file=paste(wd,"/data/dataset_testing1.csv", sep=""), row.names = 1)
+testing2 <- read.csv(file=paste(wd,"/data/dataset_testing2.csv", sep=""), row.names = 1)
+testing3 <- read.csv(file=paste(wd,"/data/dataset_testing3.csv", sep=""), row.names = 1)
+testing4 <- read.csv(file=paste(wd,"/data/dataset_testing4.csv", sep=""), row.names = 1)
+testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.names = 1)
+
+#DATA CONTROL SECTION----
+
+#select covariates
+
+#using ONLY the indicator subset that's been checked for collinearity
+#using noncor_covars from process_data for now
+
+#BRT CAN handle missing data, but euphasiid and the every other yr GOA indicator were already removed
+#during collinearity check
+
+
+train1_brt_dat <- train1[,names(train1) %in% noncor_covars]
+train2_brt_dat <- train2[,names(train2) %in% noncor_covars]
+train3_brt_dat <- train3[,names(train3) %in% noncor_covars]
+train4_brt_dat <- train4[,names(train4) %in% noncor_covars]
+train5_brt_dat <- train5[,names(train5) %in% noncor_covars]
+
+#BRT cannot include NAs in response variable
+#these are often at the END of the time series
+
+train1_brt_dat <- train1_brt_dat[which(is.na(train1_brt_dat$ln_rec)==FALSE),]
+train2_brt_dat <- train2_brt_dat[which(is.na(train2_brt_dat$ln_rec)==FALSE),]
+train3_brt_dat <- train3_brt_dat[which(is.na(train3_brt_dat$ln_rec)==FALSE),]
+train4_brt_dat <- train4_brt_dat[which(is.na(train4_brt_dat$ln_rec)==FALSE),]
+train5_brt_dat <- train5_brt_dat[which(is.na(train5_brt_dat$ln_rec)==FALSE),]
+
+test1_brt_dat <- testing1[which(is.na(testing1$ln_rec)==FALSE),]
+test2_brt_dat <- testing2[which(is.na(testing2$ln_rec)==FALSE),]
+test3_brt_dat <- testing3[which(is.na(testing3$ln_rec)==FALSE),]
+test4_brt_dat <- testing4[which(is.na(testing4$ln_rec)==FALSE),]
+test5_brt_dat <- testing5[which(is.na(testing5$ln_rec)==FALSE),]
+
+
+
+# Fit BRT Model ======================================================
+# if(fit==TRUE) {
+
+res1 <- "ln_rec"
+
+fit.covars <- names(train1_brt_dat[,!names(train1_brt_dat) %in% c("Year", "ln_rec")]) 
+
+form.covars <- paste(fit.covars, collapse=" + ")
+form <- paste(res1, "~",form.covars)
+
+
+#fit BRT on training set 1-----
+
+#see goood tutorial on https://afit-r.github.io/tree_based_methods
+
+real.fit.1 <- gbm.step(data=train1_brt_dat, gbm.y=res1, gbm.x=fit.covars, family='gaussian', 
+                       #real.fit.1 <- gbm.step(data=train, gbm.y=10, gbm.x=11:18, family='gaussian', 
+                       tree.complexity = 1, #b/c very small sample
+                       learning.rate = 0.005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                       bag.fraction = 0.8,
+                       n.minobsinnode=1) #won't run with bag fraction lower than 0.8 for training dataset of 34 years
+gbm.plot(real.fit.1)
+gbm.plot.fits(real.fit.1)
+gbm.perspec(real.fit.1, x=1, y=2) #not working
+summary(real.fit.1)
+gbm.simplify(real.fit.1, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
+gbm.interactions(real.fit.1)
+perf_n <- gbm.perf(real.fit.1)[1] #optimal # trees 264 but that's pretty low
+
+preds <- predict.gbm(real.fit.1, testing1, n.trees = perf_n, type="response")
+
+dev <- calc.deviance(obs=testing1$recruit_scaled, pred=testing1$predictions, family="gaussian", 
+                     calc.mean=TRUE)
+
+
+testing$predictions <- preds
+ggplot(testing, aes(predictions, recruit_scaled)) + geom_point() + geom_abline()
+
+sum_squared_errors <- sum((preds-testing$recruit_scaled)^2, na.rm=TRUE)
+
+
+#try different interaction depths, compare SSE
+#loop isn't working yet
+(IntDepthG <- sapply(1:8, function(x) {
+  # fit model
+  mod_boost <- gbm.step(gbm.y=res, gbm.x=fit.covars,
+                        data = train,
+                        family = "gaussian",                       
+                        tree.complexity = 1, #b/c very small sample
+                        learning.rate = 0.005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                        bag.fraction = 0.8,
+                        n.minobsinnode=1,
+                        n.folds = 5,
+                        interaction.depth=x)
+  # calculate best value for number of trees
+  bestHit <- gbm.perf(mod_boost)[1]
+  # calculate the sum of squared errors
+  boostSSE <- sum((predict(mod_boost, testing, n.trees = bestHit) - testing$recruit_scaled)^2,
+                  na.rm = TRUE)
+  return(boostSSE)}))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
