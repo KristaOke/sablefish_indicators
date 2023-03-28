@@ -22,81 +22,143 @@ dir.figs <- file.path(wd,"figs")
 #=============================================================
 #### get data ####
 
-dat <- read.csv(file.path(dir.data, "sablefish_BAS_indicators_2022.csv"))
+#first load whole dataset and look to see if any indicators look like they have nonlinear relationships
+#with recruitment
 
-scaled_dat <- dat %>% #group_by(Year) %>%
-  mutate(recruit_scaled=scale(Recruitment),
-         Spr_ST_SEBS_scaled=scale(Spring_Temperature_Surface_SEBS_Satellite),
-         YOY_grwth_Middleton_scaled=scale(Annual_Sablefish_Growth_YOY_Middleton_Survey),
-         Smr_CPUE_juv_ADFG_scaled=scale(Summer_Sablefish_CPUE_Juvenile_Nearshore_GOAAI_Survey),
-         spawner_mean_age_scaled=scale(Annual_Sablefish_Mean_Age_Female_Adult_Model),
-         spawner_age_evenness_scaled=scale(Annual_Sablefish_Age_Evenness_Female_Adult_Model),
-         arrowtooth_biomass_scaled=scale(Annual_Arrowtooth_Biomass_GOA_Model),
-         sablefish_bycatch_arrowtooth_fishery_scaled=scale(Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery),
-         smr_adult_cond_scaled=scale(Summer_Sablefish_Condition_Female_Adult_GOA_Survey))
+scaled_dat <- read.csv(file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""), row.names = 1)
 
-#look at covars
-ggplot(scaled_dat, aes(Spr_ST_SEBS_scaled, recruit_scaled)) + geom_point() +
-  geom_smooth()
+subset_dat <- scaled_dat[,names(scaled_dat) %in% noncor_covars]
 
-ggplot(scaled_dat, aes(YOY_grwth_Middleton_scaled, recruit_scaled)) + geom_point() +
-  geom_smooth()
+plot_covars <- subset_dat %>% gather(key=type, value=value, -c(Year, ln_rec))
 
-ggplot(scaled_dat, aes(Smr_CPUE_juv_ADFG_scaled, recruit_scaled)) + geom_point() +
-  geom_smooth()
+rec.plot <- ggplot(plot_covars, aes(y=ln_rec, x=value, fill=type)) +
+  geom_point() + geom_smooth() +
+  scale_fill_viridis(discrete=TRUE) +
+  facet_wrap(~type, scales='free') +
+  theme(legend.position = "NA")
+rec.plot
 
-ggplot(scaled_dat, aes(spawner_mean_age_scaled, recruit_scaled)) + geom_point() +
-  geom_smooth()
+#Get data=======
 
-ggplot(scaled_dat, aes(spawner_age_evenness_scaled, recruit_scaled)) + geom_point() +
-  geom_smooth() #looks nonlinear
+# load data that is already z-scored, checked for correlations
 
-ggplot(scaled_dat, aes(arrowtooth_biomass_scaled, recruit_scaled)) + geom_point() +
-  geom_smooth()
+train1 <- read.csv(file=paste(wd,"/data/dataset_training1.csv", sep=""), row.names = 1)
+train2 <- read.csv(file=paste(wd,"/data/dataset_training2.csv", sep=""), row.names = 1)
+train3 <- read.csv(file=paste(wd,"/data/dataset_training3.csv", sep=""), row.names = 1)
+train4 <- read.csv(file=paste(wd,"/data/dataset_training4.csv", sep=""), row.names = 1)
+train5 <- read.csv(file=paste(wd,"/data/dataset_training5.csv", sep=""), row.names = 1)
 
-ggplot(scaled_dat, aes(sablefish_bycatch_arrowtooth_fishery_scaled, recruit_scaled)) + geom_point() +
-  geom_smooth()
+testing1 <- read.csv(file=paste(wd,"/data/dataset_testing1.csv", sep=""), row.names = 1)
+testing2 <- read.csv(file=paste(wd,"/data/dataset_testing2.csv", sep=""), row.names = 1)
+testing3 <- read.csv(file=paste(wd,"/data/dataset_testing3.csv", sep=""), row.names = 1)
+testing4 <- read.csv(file=paste(wd,"/data/dataset_testing4.csv", sep=""), row.names = 1)
+testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.names = 1)
 
-ggplot(scaled_dat, aes(smr_adult_cond_scaled, recruit_scaled)) + geom_point() +
-  geom_smooth()
-#look into possible even-odd pattern?
+#DATA CONTROL SECTION----
 
-p1 <- ggplot(scaled_dat, aes(Year, recruit_scaled)) + geom_point() +
-  geom_line()
-p2 <- ggplot(scaled_dat, aes(Year, Spr_ST_SEBS_scaled)) + geom_point() +
-  geom_line()
+#select covariates
 
-plot_grid(p1, p2, ncol=1)
+#using ONLY the indicator subset that's been checked for collinearity
+#using noncor_covars from process_data for now
 
-p3 <- ggplot(scaled_dat, aes(Year, arrowtooth_biomass_scaled)) + geom_point() +
-  geom_smooth()
+#GAM cannot handle missing data, euphasiid and the every other yr GOA indicator were already removed
 
-p4 <- ggplot(scaled_dat, aes(Year, sablefish_bycatch_arrowtooth_fishery_scaled)) + geom_point() +
-  geom_smooth()
 
-p5 <- ggplot(scaled_dat, aes(Year, Smr_CPUE_juv_ADFG_scaled)) + geom_point() +
-  geom_smooth()
+train1_gam_dat <- train1[,names(train1) %in% noncor_covars]
+train2_gam_dat <- train2[,names(train2) %in% noncor_covars]
+train3_gam_dat <- train3[,names(train3) %in% noncor_covars]
+train4_gam_dat <- train4[,names(train4) %in% noncor_covars]
+train5_gam_dat <- train5[,names(train5) %in% noncor_covars]
 
-plot_grid(p1, p2, p3, p4, p5, ncol=1)
 
-#check cors==================
 
-covar.mtx <- scaled_dat %>% select(-c(1:10))
-corr.mtx <- cor(covar.mtx, use="na.or.complete")
-corr.mtx
-corrplot::corrplot.mixed(corr.mtx, tl.pos="lt", 
-                         diag="n")
-#drop arrowtooth biomass
-#LOTS OF CORRELATIONS > 0.6
-#drop bycatch in arrowtooth for now, highly corr w ADFG survey, which is more cor w recruitment?
+#new gams-----------
 
-covar.mtx2 <- scaled_dat %>% select(-c(1:11,17,18))
-corr.mtx2 <- cor(covar.mtx2, use="na.or.complete")
-corr.mtx2
-corrplot::corrplot.mixed(corr.mtx2, tl.pos="lt", 
-                         diag="n")
-#drop mean age scaled too, could this be kind of too colinear w recruitment?
-#and its corr w ADFG survey
+mod_train1_1 <- gam(ln_rec ~ s(ann_heatwave_GOA_scaled, k=4)  +      
+#Smr_temp_250m_GOA_scaled  +      
+#Spr_chlA_biom_SEBS_scaled  +     
+#Spr_chlA_peak_GOA_scaled  +     
+#Spr_chlA_peak_SEBS_scaled  +  
+#ann_Copepod_size_WGOA_scaled +     
+s(YOY_grwth_Middleton_scaled, k=4)  +     
+s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
+s(Smr_condition_fem_age4_GOA_scaled, k=4) +
+s(smr_adult_cond_scaled, k=4), data=train1_gam_dat)
+gam.check(mod_train1_1) #not good
+summary(mod_train1_1)
+
+#drop lease nonlinear and try again
+mod_train1_2 <- gam(ln_rec ~ s(ann_heatwave_GOA_scaled, k=4)  +      
+                      #Smr_temp_250m_GOA_scaled  +      
+                      #Spr_chlA_biom_SEBS_scaled  +     
+                      #Spr_chlA_peak_GOA_scaled  +     
+                      #Spr_chlA_peak_SEBS_scaled  +  
+                      #ann_Copepod_size_WGOA_scaled +     
+                      s(YOY_grwth_Middleton_scaled, k=4)  +     
+                      s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
+                      s(Smr_condition_fem_age4_GOA_scaled, k=4) +
+                      smr_adult_cond_scaled, data=train1_gam_dat)
+gam.check(mod_train1_2) #not good
+summary(mod_train1_2)
+
+mod_train1_3 <- gam(ln_rec ~ s(ann_heatwave_GOA_scaled, k=4)  +      
+                      #Smr_temp_250m_GOA_scaled  +      
+                      #Spr_chlA_biom_SEBS_scaled  +     
+                      #Spr_chlA_peak_GOA_scaled  +     
+                      #Spr_chlA_peak_SEBS_scaled  +  
+                      #ann_Copepod_size_WGOA_scaled +     
+                      s(YOY_grwth_Middleton_scaled, k=4)  +     
+                      s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
+                      Smr_condition_fem_age4_GOA_scaled +
+                      smr_adult_cond_scaled, data=train1_gam_dat)
+gam.check(mod_train1_3) #not good
+summary(mod_train1_3)
+
+mod_train1_3 <- gam(ln_rec ~ ann_heatwave_GOA_scaled  +      
+                      #Smr_temp_250m_GOA_scaled  +      
+                      #Spr_chlA_biom_SEBS_scaled  +     
+                      #Spr_chlA_peak_GOA_scaled  +     
+                      #Spr_chlA_peak_SEBS_scaled  +  
+                      #ann_Copepod_size_WGOA_scaled +     
+                      s(YOY_grwth_Middleton_scaled, k=4)  +     
+                      s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
+                      Smr_condition_fem_age4_GOA_scaled +
+                      smr_adult_cond_scaled, data=train1_gam_dat)
+gam.check(mod_train1_3) #not good
+summary(mod_train1_3)
+
+
+mod_train1_4 <- gam(ln_rec ~ ann_heatwave_GOA_scaled  +      
+                      #Smr_temp_250m_GOA_scaled  +      
+                      #Spr_chlA_biom_SEBS_scaled  +     
+                      #Spr_chlA_peak_GOA_scaled  +     
+                      #Spr_chlA_peak_SEBS_scaled  +  
+                      #ann_Copepod_size_WGOA_scaled +     
+                      YOY_grwth_Middleton_scaled  +     
+                      s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
+                      Smr_condition_fem_age4_GOA_scaled +
+                      smr_adult_cond_scaled, data=train1_gam_dat)
+gam.check(mod_train1_4) #not good
+summary(mod_train1_4)
+
+#None are nonlinear!
+
+#add back in the covars I removed, limit k since still too few data
+mod_train1_5 <- gam(ln_rec ~ ann_heatwave_GOA_scaled  +      
+                      s(Smr_temp_250m_GOA_scaled, k=3)  +      
+                      s(Spr_chlA_biom_SEBS_scaled, k=3)  +     
+                      s(Spr_chlA_peak_GOA_scaled, k=3)  +     
+                      s(Spr_chlA_peak_SEBS_scaled, k=3)  +  
+                      s(ann_Copepod_size_WGOA_scaled, k=3) +     
+                      YOY_grwth_Middleton_scaled  +     
+                      Smr_CPUE_juv_ADFG_ln_scaled +    
+                      Smr_condition_fem_age4_GOA_scaled +
+                      smr_adult_cond_scaled, data=train1_gam_dat)
+gam.check(mod_train1_5) #not good
+summary(mod_train1_5)
+
+
+#OLD===============================================================================================
 
 #gamms==============
 
