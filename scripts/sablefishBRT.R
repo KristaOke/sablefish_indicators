@@ -406,7 +406,7 @@ form <- paste(res1, "~",form.covars)
 
 #see goood tutorial on https://afit-r.github.io/tree_based_methods
 
-real.fit.1 <- gbm.step(data=train1_brt_dat, gbm.y=res1, gbm.x=fit.covars, family='gaussian', 
+real.fit.1 <- gbm.step(data=train1_brt_dat, gbm.y=2, gbm.x=3:12, family='gaussian', 
                        #real.fit.1 <- gbm.step(data=train, gbm.y=10, gbm.x=11:18, family='gaussian', 
                        tree.complexity = 1, #b/c very small sample
                        learning.rate = 0.005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
@@ -416,9 +416,10 @@ gbm.plot(real.fit.1)
 gbm.plot.fits(real.fit.1)
 gbm.perspec(real.fit.1, x=1, y=8) #not working
 summary(real.fit.1)
-gbm.simplify(real.fit.1, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
+gbm.simplify(real.fit.1, n.drops = 5) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
 gbm.interactions(real.fit.1)
-perf_n <- gbm.perf(real.fit.1)[1] #optimal # trees 264 but that's pretty low
+perf_n <- gbm.perf(real.fit.1)[1] #limit n trees because overfitting is a concern for BRT
+#optimal # trees 143 but that's pretty low
 
 preds <- predict.gbm(real.fit.1, test1_brt_dat, n.trees = perf_n, type="response")
 
@@ -430,6 +431,58 @@ test1_brt_dat$predictions <- preds
 ggplot(test1_brt_dat, aes(predictions, ln_rec)) + geom_point() + geom_abline()
 
 sum_squared_errors <- sum((preds-test1_brt_dat$ln_rec)^2, na.rm=TRUE)
+
+#refit with smallest n trees from gbm.perf
+refit.1 <- gbm(formula(form), data=train1_brt_dat, distribution='gaussian', 
+               n.trees=143, interaction.depth=1, n.minobsinnode=1)
+
+gbm.plot(refit.1)
+gbm.plot.fits(refit.1)
+gbm.perspec(refit.1, x=1, y=8) #not working
+summary(refit.1)
+
+plot(refit.1)
+
+refit.1.1 <- gbm.step(data=train1_brt_dat, gbm.y=res1, gbm.x=fit.covars, family='gaussian', 
+                       #real.fit.1 <- gbm.step(data=train, gbm.y=10, gbm.x=11:18, family='gaussian', 
+                      # tree.complexity = 1, #b/c very small sample
+                      max.trees = 30000,
+                       learning.rate = 0.0005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                       bag.fraction = 0.8,
+                       n.minobsinnode=1) #won't run with bag fraction lower than 0.8 for training dataset of 34 years
+gbm.plot(refit.1.1)
+gbm.plot.fits(refit.1.1)
+gbm.perspec(refit.1.1, x=1, y=8) #not working
+summary(refit.1.1)
+gbm.simplify(refit.1.1, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
+gbm.interactions(refit.1.1)
+
+
+perf_n1.1 <- gbm.perf(refit.1.1)[1] #limit n trees because overfitting is a concern for BRT
+#optimal # trees 1018
+
+preds <- predict.gbm(refit.1.1, test1_brt_dat, n.trees = perf_n, type="response")
+
+dev <- calc.deviance(obs=test1_brt_dat$ln_rec, pred=test1_brt_dat$predictions, family="gaussian", 
+                     calc.mean=TRUE)
+
+
+test1_brt_dat$predictions <- preds
+ggplot(test1_brt_dat, aes(predictions, ln_rec)) + geom_point() + geom_abline()
+
+sum_squared_errors <- sum((preds-test1_brt_dat$ln_rec)^2, na.rm=TRUE)
+
+refit.1.1.1 <- gbm(formula(form), data=train1_brt_dat, distribution='gaussian', 
+               n.trees=1018, interaction.depth=1, n.minobsinnode=1)
+
+gbm.plot(refit.1.1.1)
+gbm.plot.fits(refit.1.1.1)
+gbm.perspec(refit.1.1.1, x=1, y=8) #not working
+summary(refit.1.1.1)
+
+
+#need to also check if different distributions give better SSE
+
 
 ggplot(train1_brt_dat, aes(Spr_ST_SEBS_scaled, ln_rec, col=as.factor(Year))) + geom_point()
 ggplot(train1_brt_dat, aes(Spr_ST_SEBS_scaled, ln_rec, col=as.factor(Year))) + geom_point() +geom_text(aes(Spr_ST_SEBS_scaled, ln_rec,label=Year))
@@ -447,3 +500,111 @@ ggplot(train1, aes(ann_heatwave_GOA_scaled, Smr_CPUE_juv_ADFG_ln_scaled, col=ln_
 ggplot(train1, aes(ann_heatwave_GOA_scaled, ln_rec)) + geom_point() +geom_text(aes(ann_heatwave_GOA_scaled, ln_rec,label=Year))
 
 ggplot(train1, aes(ann_heatwave_GOA_scaled, Spr_ST_SEBS_scaled, col=ln_rec)) + geom_point()
+
+
+
+#REPEAT without shorter time series that aren't likely to be included===========================
+
+#both "Smr_condition_fem_age4_GOA_scaled" and "Smr_temp_250m_GOA_scaled"
+#are shorter than others and have low influence
+
+# Fit BRT Model ======================================================
+# if(fit==TRUE) {
+
+res1 <- "ln_rec"
+
+fit.covars <- names(train1_brt_dat[,!names(train1_brt_dat) %in% c("Year", "ln_rec", 
+                                  "Smr_temp_250m_GOA_scaled", "Smr_condition_fem_age4_GOA_scaled")]) 
+
+form.covars <- paste(fit.covars, collapse=" + ")
+form <- paste(res1, "~",form.covars)
+
+
+#fit BRT on training set 1-----
+
+#see goood tutorial on https://afit-r.github.io/tree_based_methods
+
+real.fit.1 <- gbm.step(data=train1_brt_dat, gbm.y=2, gbm.x=3:12, family='gaussian', 
+                       #real.fit.1 <- gbm.step(data=train, gbm.y=10, gbm.x=11:18, family='gaussian', 
+                       tree.complexity = 1, #b/c very small sample
+                       learning.rate = 0.005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                       bag.fraction = 0.8,
+                       n.minobsinnode=1) #won't run with bag fraction lower than 0.8 for training dataset of 34 years
+gbm.plot(real.fit.1)
+gbm.plot.fits(real.fit.1)
+gbm.perspec(real.fit.1, x=1, y=8) #not working
+summary(real.fit.1)
+gbm.simplify(real.fit.1, n.drops = 5) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
+gbm.interactions(real.fit.1)
+perf_n <- gbm.perf(real.fit.1)[1] #limit n trees because overfitting is a concern for BRT
+#optimal # trees 143 but that's pretty low
+
+preds <- predict.gbm(real.fit.1, test1_brt_dat, n.trees = perf_n, type="response")
+
+dev <- calc.deviance(obs=test1_brt_dat$ln_rec, pred=test1_brt_dat$predictions, family="gaussian", 
+                     calc.mean=TRUE)
+
+
+test1_brt_dat$predictions <- preds
+ggplot(test1_brt_dat, aes(predictions, ln_rec)) + geom_point() + geom_abline()
+
+sum_squared_errors <- sum((preds-test1_brt_dat$ln_rec)^2, na.rm=TRUE)
+
+#refit with smallest n trees from gbm.perf
+refit.1 <- gbm(formula(form), data=train1_brt_dat, distribution='gaussian', 
+               n.trees=76, interaction.depth=1, n.minobsinnode=1)
+
+gbm.plot(refit.1)
+gbm.plot.fits(refit.1)
+gbm.perspec(refit.1, x=1, y=8) #not working
+summary(refit.1)
+
+plot(refit.1)
+
+refit.1.1 <- gbm.step(data=train1_brt_dat, gbm.y=res1, gbm.x=fit.covars, family='gaussian', 
+                      #real.fit.1 <- gbm.step(data=train, gbm.y=10, gbm.x=11:18, family='gaussian', 
+                      # tree.complexity = 1, #b/c very small sample
+                      max.trees = 30000,
+                      learning.rate = 0.0005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                      bag.fraction = 0.8,
+                      n.minobsinnode=1) #won't run with bag fraction lower than 0.8 for training dataset of 34 years
+gbm.plot(refit.1.1)
+gbm.plot.fits(refit.1.1)
+gbm.perspec(refit.1.1, x=1, y=8) #not working
+summary(refit.1.1)
+gbm.simplify(refit.1.1, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
+gbm.interactions(refit.1.1)
+
+
+perf_n1.1 <- gbm.perf(refit.1.1)[1] #limit n trees because overfitting is a concern for BRT
+#optimal # trees 1007
+
+preds <- predict.gbm(refit.1.1, test1_brt_dat, n.trees = perf_n, type="response")
+
+dev <- calc.deviance(obs=test1_brt_dat$ln_rec, pred=test1_brt_dat$predictions, family="gaussian", 
+                     calc.mean=TRUE)
+
+
+test1_brt_dat$predictions <- preds
+ggplot(test1_brt_dat, aes(predictions, ln_rec)) + geom_point() + geom_abline()
+
+sum_squared_errors <- sum((preds-test1_brt_dat$ln_rec)^2, na.rm=TRUE)
+
+refit.1.1.1 <- gbm(formula(form), data=train1_brt_dat, distribution='gaussian', 
+                   n.trees=1018, interaction.depth=1, n.minobsinnode=1)
+
+gbm.plot(refit.1.1.1)
+gbm.plot.fits(refit.1.1.1)
+gbm.perspec(refit.1.1.1, x=1, y=8) #not working
+summary(refit.1.1.1)
+
+
+
+
+
+
+
+
+
+
+
