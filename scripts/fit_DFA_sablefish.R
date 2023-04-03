@@ -167,6 +167,9 @@ proc_rot = solve(H_inv) %*% model.1$states #
 # reverse trend 2 to plot
 Z.rot[,2] <- -Z.rot[,2]
 
+#trying for now
+z.rot <- Z.est
+
 Z.rot$names <- rownames(z.mat1)
 Z.rot <- arrange(Z.rot, V1)
 Z.rot <- gather(Z.rot[,c(1,2)])
@@ -211,7 +214,7 @@ Z_rot = Z_est %*% H_inv
 ## rotate processes
 proc_rot = solve(H_inv) %*% model.1$states
 
-mm <- 2 #4 processes
+mm <- 1 #4 processes
 
 rec_names <- rownames(z.mat1)
 ylbl <- rec_names
