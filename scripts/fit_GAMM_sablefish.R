@@ -145,7 +145,7 @@ summary(mod_train1_4)
 
 #add back in the covars I removed, limit k since still too few data
 mod_train1_5 <- gam(ln_rec ~ ann_heatwave_GOA_scaled  +      
-                      s(Smr_temp_250m_GOA_scaled, k=3)  +      
+                    #  s(Smr_temp_250m_GOA_scaled, k=3)  +      
                       s(Spr_chlA_biom_SEBS_scaled, k=3)  +     
                       s(Spr_chlA_peak_GOA_scaled, k=3)  +     
                       s(Spr_chlA_peak_SEBS_scaled, k=3)  +  
