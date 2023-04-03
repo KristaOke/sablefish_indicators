@@ -148,6 +148,9 @@ scaled_dat <- dat %>% #group_by(Year) %>%
          sablefish_bycatch_arrowtooth_fishery_scaled=scale(ln_Annual_Sablefish_Incidental_Catch_Arrowtooth_Target_GOA_Fishery),
          smr_adult_cond_scaled=scale(Summer_Sablefish_Condition_Female_Adult_GOA_Survey))
 
+#save
+write.csv(scaled_dat, file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""))
+
 
 #split data======
 
@@ -547,6 +550,32 @@ vsebsmod5 <- lm(ln_rec ~ #ann_heatwave_GOA_scaled  +
 
 
 vifsebs5 <- car::vif(vsebsmod5) #also fine
+
+#what are the indicators that remain?
+noncor_covars <- c("Year", "ln_rec",
+                   "ann_heatwave_GOA_scaled"  ,
+  "Smr_temp_250m_GOA_scaled"  , 
+  "Spr_chlA_biom_SEBS_scaled"  ,  
+  "Spr_chlA_peak_GOA_scaled" ,
+ "Spr_chlA_peak_SEBS_scaled" ,
+  "ann_Copepod_size_WGOA_scaled" ,
+  "YOY_grwth_Middleton_scaled" ,     
+  "Smr_CPUE_juv_ADFG_ln_scaled"  ,      
+  "Smr_condition_fem_age4_GOA_scaled" ,
+  "smr_adult_cond_scaled")
+
+#heatwave index causes issues, let's make a second set without it
+noncor_covars2 <- c("Year", "ln_rec",
+                   "Spr_ST_SEBS_scaled"  ,
+                   "Smr_temp_250m_GOA_scaled"  , 
+                   "Spr_chlA_biom_SEBS_scaled"  ,  
+                   "Spr_chlA_peak_GOA_scaled" ,
+                   "Spr_chlA_peak_SEBS_scaled" ,
+                   "ann_Copepod_size_EGOA_scaled" ,
+                   "ann_Copepod_size_WGOA_scaled" ,
+                   "Smr_CPUE_juv_ADFG_ln_scaled"  ,      
+                   "Smr_condition_fem_age4_GOA_scaled" ,
+                   "smr_adult_cond_scaled")
 
 
 #now automate the process
