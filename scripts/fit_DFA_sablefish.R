@@ -24,6 +24,16 @@ library(cowplot)
 library(AKesp)
 library(corrplot)
 
+#=============================================================
+#### Define Directory Structure ####
+wd <- getwd()
+
+dir.data <- file.path(wd,"data")
+dir.output <- file.path(wd,"output")
+dir.figs <- file.path(wd,"figs")
+
+
+
 
 #Get data=======
 
