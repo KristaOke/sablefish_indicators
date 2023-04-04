@@ -115,7 +115,7 @@ train5_dfa_dat <- train5_dfa_dat[,!names(train5_dfa_dat) %in% c("Year")]
 
 z.mat1 <- t(as.matrix(train1_dfa_dat))
 colnames(z.mat1) <- z.mat1[1,]
-z.mat1 <- z.mat1[-1,]
+#z.mat1 <- z.mat1[-1,] #remove year above
 
 
 #fit model========
