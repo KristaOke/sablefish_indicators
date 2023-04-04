@@ -67,27 +67,33 @@ train5_dfa_dat <- train5[,c(1,24:43)]
 #DFA can handle missing data but there is still too much missing in euphasiid data
 #remove the mean age and evenness indicators
 #also remove arrowtooth biomass b/c it's not converging even in best model
+#same reason dropping sebs ST
 
 train1_dfa_dat <- train1_dfa_dat[,!names(train1_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
                                                      "spawner_mean_age_scaled",
                                                      "spawner_age_evenness_scaled",
-                                                     "arrowtooth_biomass_scaled")]
+                                                     "arrowtooth_biomass_scaled",
+                                                     "Spr_ST_SEBS_scaled")]
 train2_dfa_dat <- train2_dfa_dat[,!names(train2_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
                                                                 "spawner_mean_age_scaled",
                                                                 "spawner_age_evenness_scaled",
-                                                                "arrowtooth_biomass_scaled")]
+                                                                "arrowtooth_biomass_scaled",
+                                                                "Spr_ST_SEBS_scaled")]
 train3_dfa_dat <- train3_dfa_dat[,!names(train3_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
                                                                 "spawner_mean_age_scaled",
                                                                 "spawner_age_evenness_scaled",
-                                                                "arrowtooth_biomass_scaled")]
+                                                                "arrowtooth_biomass_scaled",
+                                                                "Spr_ST_SEBS_scaled")]
 train4_dfa_dat <- train4_dfa_dat[,!names(train4_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
                                                                 "spawner_mean_age_scaled",
                                                                 "spawner_age_evenness_scaled",
-                                                                "arrowtooth_biomass_scaled")]
+                                                                "arrowtooth_biomass_scaled",
+                                                                "Spr_ST_SEBS_scaled")]
 train5_dfa_dat <- train5_dfa_dat[,!names(train5_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
                                                                 "spawner_mean_age_scaled",
                                                                 "spawner_age_evenness_scaled",
-                                                                "arrowtooth_biomass_scaled")]
+                                                                "arrowtooth_biomass_scaled",
+                                                                "Spr_ST_SEBS_scaled")]
 
 
 #manupulate data for DFA========
@@ -161,8 +167,8 @@ model.data1
 
 # now fit best model
 
-model.list.1 = list(A="zero", m=1, R="diagonal and unequal") # best model by a little
-cntl.list1 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
+model.list.1 = list(A="zero", m=1, R="diagonal and equal") # best model by a little
+cntl.list1 = list(minit=200, maxit=40000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 model.1 = MARSS(z.mat1, model=model.list.1, z.score=TRUE, form="dfa", control=cntl.list1)
 #not working yet, convergence issues
 
