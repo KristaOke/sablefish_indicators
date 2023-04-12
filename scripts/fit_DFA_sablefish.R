@@ -73,27 +73,27 @@ train1_dfa_dat <- train1_dfa_dat[,!names(train1_dfa_dat) %in% c("Smr_euph_abun_K
                                                      "spawner_mean_age_scaled",
                                                      "spawner_age_evenness_scaled",
                                                      "arrowtooth_biomass_scaled",
-                                                     "Spr_ST_SEBS_scaled")]
+                                                     "Smr_condition_fem_age4_GOA_scaled")]
 train2_dfa_dat <- train2_dfa_dat[,!names(train2_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
                                                                 "spawner_mean_age_scaled",
                                                                 "spawner_age_evenness_scaled",
                                                                 "arrowtooth_biomass_scaled",
-                                                                "Spr_ST_SEBS_scaled")]
+                                                                "Smr_condition_fem_age4_GOA_scaled")]
 train3_dfa_dat <- train3_dfa_dat[,!names(train3_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
                                                                 "spawner_mean_age_scaled",
                                                                 "spawner_age_evenness_scaled",
                                                                 "arrowtooth_biomass_scaled",
-                                                                "Spr_ST_SEBS_scaled")]
+                                                                "Smr_condition_fem_age4_GOA_scaled")]
 train4_dfa_dat <- train4_dfa_dat[,!names(train4_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
                                                                 "spawner_mean_age_scaled",
                                                                 "spawner_age_evenness_scaled",
                                                                 "arrowtooth_biomass_scaled",
-                                                                "Spr_ST_SEBS_scaled")]
+                                                                "Smr_condition_fem_age4_GOA_scaled")]
 train5_dfa_dat <- train5_dfa_dat[,!names(train5_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
                                                                 "spawner_mean_age_scaled",
                                                                 "spawner_age_evenness_scaled",
                                                                 "arrowtooth_biomass_scaled",
-                                                                "Spr_ST_SEBS_scaled")]
+                                                                "Smr_condition_fem_age4_GOA_scaled")]
 
 
 #manupulate data for DFA========
@@ -117,6 +117,28 @@ z.mat1 <- t(as.matrix(train1_dfa_dat))
 colnames(z.mat1) <- z.mat1[1,]
 #z.mat1 <- z.mat1[-1,] #remove year above
 
+#try w ALL DATA------
+
+scaled <- read.csv(file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""), row.names = 1)
+
+#select the z-scored columns, no recruitment
+scaled_dfa_dat <- scaled[,c(1,24:43)]
+
+scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
+                                                                "spawner_mean_age_scaled",
+                                                                "spawner_age_evenness_scaled",
+                                                                "arrowtooth_biomass_scaled",
+                                                                "Smr_condition_fem_age4_GOA_scaled")]
+
+#check to make sure years are in order!
+scaled_dfa_dat$Year==scaled_dfa_dat$Year[order(scaled_dfa_dat$Year)] #SHOULD BE ALL TRUE
+
+#then drop Year column
+scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Year")]
+
+z.mat1 <- t(as.matrix(scaled_dfa_dat))
+colnames(z.mat1) <- z.mat1[1,]
+
 
 #fit model========
 
@@ -138,7 +160,7 @@ model.data = data.frame()
 
 # fit models & store results
 for(R in levels.R) {
-  for(m in 1:4) {  # allowing up to 3 trends
+  for(m in 1:6) {  # allowing up to 3 trends
     dfa.model = list(A="zero", R=R, m=m)
     kemz = MARSS(z.mat1, model=dfa.model, control=cntl.list,
                  form="dfa", z.score=TRUE)
@@ -161,17 +183,19 @@ model.data1 <- model.data1 %>%
   arrange(dAICc)
 model.data1
 
+
+
 #---
 
 #rotate=======
 
 # now fit best model
 
-model.list.1 = list(A="zero", m=1, R="diagonal and equal") # best model by a little
+model.list.1 = list(A="zero", m=1, R="diagonal and unequal") # best model by a little
 cntl.list1 = list(minit=200, maxit=40000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 model.1 = MARSS(z.mat1, model=model.list.1, z.score=TRUE, form="dfa", control=cntl.list1)
-#not working yet, convergence issues
-
+#
+autoplot(model.1)
 
 # and rotate the loadings
 Z.est = coef(model.1, type="matrix")$Z
@@ -183,8 +207,9 @@ proc_rot = solve(H_inv) %*% model.1$states #
 # reverse trend 2 to plot
 Z.rot[,2] <- -Z.rot[,2]
 
-#trying for now
-z.rot <- Z.est
+#trying for now IF 1 TREND
+Z.rot <- Z.est
+proc_rot =  model.1$states 
 
 Z.rot$names <- rownames(z.mat1)
 Z.rot <- arrange(Z.rot, V1)
@@ -227,8 +252,14 @@ H_inv <- varimax(Z_est)$rotmat
 
 ## rotate factor loadings
 Z_rot = Z_est %*% H_inv
+#IF ONE TREND
+Z_rot <- Z_est
+
 ## rotate processes
 proc_rot = solve(H_inv) %*% model.1$states
+
+#if 1 trend don't rotate?????
+proc_rot =  model.1$states
 
 mm <- 1 #4 processes
 
@@ -296,9 +327,9 @@ ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 
 # now fit second best model
 
-model.list.2 = list(A="zero", m=3, R="diagonal and unequal") # second best model
-model.2 = MARSS(z.ind.mat, model=model.list.2, z.score=TRUE, form="dfa", control=cntl.list2)
-#DOES NOT CONVERGE bump up to 40K iter
+model.list.2 = list(A="zero", m=2, R="diagonal and unequal") # second best model
+model.2 = MARSS(z.mat1, model=model.list.2, z.score=TRUE, form="dfa", control=cntl.list2)
+#
 cntl.list2 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
 
@@ -312,10 +343,10 @@ proc_rot = solve(H_inv) %*% model.2$states #doesn't work
 # reverse trend 2 to plot
 Z.rot[,2] <- -Z.rot[,2]
 
-Z.rot$names <- rownames(z.ind.mat)
+Z.rot$names <- rownames(z.mat1)
 Z.rot <- arrange(Z.rot, V1)
 Z.rot <- gather(Z.rot[,c(1,2)])
-Z.rot$names <- rownames(z.ind.mat)
+Z.rot$names <- rownames(z.mat1)
 #Z.rot$plot.names <- reorder(Z.rot$names, 1:14)
 
 
@@ -341,9 +372,9 @@ rec.plot <- ggplot(Z.rot, aes(names, value, fill=key)) + geom_bar(stat="identity
 yr_frst <- 1977
 
 ## get number of time series
-N_ts <- dim(z.ind.mat)[1]
+N_ts <- dim(z.mat1)[1]
 ## get length of time series
-TT <- dim(z.ind.mat)[2]
+TT <- dim(z.mat1)[2]
 
 ## get the estimated ZZ
 Z_est <- coef(model.2, type = "matrix")$Z
@@ -355,11 +386,11 @@ Z_rot = Z_est %*% H_inv
 ## rotate processes
 proc_rot = solve(H_inv) %*% model.2$states
 
-mm <- 3 #processes
+mm <- 2 #processes
 
-rec_names <- rownames(z.ind.mat)
+rec_names <- rownames(z.mat1)
 ylbl <- rec_names
-w_ts <- seq(dim(z.ind.mat)[2])
+w_ts <- seq(dim(z.mat1)[2])
 layout(matrix(c(1, 2, 3, 4, 5, 6), mm, 2), widths = c(2, 1))
 ## par(mfcol=c(mm,2), mai=c(0.5,0.5,0.5,0.1), omi=c(0,0,0,0))
 # jpeg("figs/ugly_DFA_trends_loadings.jpg")
@@ -378,7 +409,7 @@ for (i in 1:mm) {
   ## add panel labels
   mtext(paste("State", i), side = 3, line = 0.5)
   #axis(1, 12 * (0:dim(all.clim.dat)[2]) + 1, yr_frst + 0:dim(all.clim.dat)[2])
-  axis(1, 1:47, yr_frst + 0:dim(z.ind.mat)[2])
+  axis(1, 1:47, yr_frst + 0:dim(z.mat1)[2])
 }
 ## plot the loadings
 clr <- c("brown", 
@@ -639,5 +670,8 @@ for (i in 1:N_ts) {
   lines(w_ts, mn, col = "black", lwd = 2)
   lines(w_ts, lo, col = "darkgray")
 }
+
+
+
 
 
