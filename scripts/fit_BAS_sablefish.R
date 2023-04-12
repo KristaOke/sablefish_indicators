@@ -65,17 +65,31 @@ testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.na
 
 #BAS CANNOT handle missing data
 
-train1_bas_dat <- train1[,names(train1) %in% noncor_covars2]
-train2_bas_dat <- train2[,names(train2) %in% noncor_covars2]
-train3_bas_dat <- train3[,names(train3) %in% noncor_covars2]
-train4_bas_dat <- train4[,names(train4) %in% noncor_covars2]
-train5_bas_dat <- train5[,names(train5) %in% noncor_covars2]
 
-test1_bas_dat <- testing1[,names(testing1) %in% noncor_covars2]
-test2_bas_dat <- testing2[,names(testing2) %in% noncor_covars2]
-test3_bas_dat <- testing3[,names(testing3) %in% noncor_covars2]
-test4_bas_dat <- testing4[,names(testing4) %in% noncor_covars2]
-test5_bas_dat <- testing5[,names(testing5) %in% noncor_covars2]
+noncor_covars3 <- c("Year", "ln_rec",
+                    "Spr_ST_SEBS_scaled"  ,
+                    "Smr_temp_250m_GOA_scaled"  , 
+                    "Spr_chlA_biom_GOA_scaled"  , 
+                    "Spr_chlA_biom_SEBS_scaled"  ,  
+                    "Spr_chlA_peak_GOA_scaled" ,
+                    "Spr_chlA_peak_SEBS_scaled" ,
+                    "ann_Copepod_size_EGOA_scaled" ,
+                    "YOY_grwth_Middleton_scaled",
+                    "Smr_CPUE_juv_ADFG_ln_scaled"  ,      
+                    "smr_adult_cond_scaled")
+
+
+train1_bas_dat <- train1[,names(train1) %in% noncor_covars3]
+train2_bas_dat <- train2[,names(train2) %in% noncor_covars3]
+train3_bas_dat <- train3[,names(train3) %in% noncor_covars3]
+train4_bas_dat <- train4[,names(train4) %in% noncor_covars3]
+train5_bas_dat <- train5[,names(train5) %in% noncor_covars3]
+
+test1_bas_dat <- testing1[,names(testing1) %in% noncor_covars3]
+test2_bas_dat <- testing2[,names(testing2) %in% noncor_covars3]
+test3_bas_dat <- testing3[,names(testing3) %in% noncor_covars3]
+test4_bas_dat <- testing4[,names(testing4) %in% noncor_covars3]
+test5_bas_dat <- testing5[,names(testing5) %in% noncor_covars3]
 
 #remove rows missing values???
 
