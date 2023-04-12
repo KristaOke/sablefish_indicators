@@ -65,17 +65,17 @@ testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.na
 
 #BAS CANNOT handle missing data
 
-train1_bas_dat <- train1[,names(train1) %in% noncor_covars]
-train2_bas_dat <- train2[,names(train2) %in% noncor_covars]
-train3_bas_dat <- train3[,names(train3) %in% noncor_covars]
-train4_bas_dat <- train4[,names(train4) %in% noncor_covars]
-train5_bas_dat <- train5[,names(train5) %in% noncor_covars]
+train1_bas_dat <- train1[,names(train1) %in% noncor_covars2]
+train2_bas_dat <- train2[,names(train2) %in% noncor_covars2]
+train3_bas_dat <- train3[,names(train3) %in% noncor_covars2]
+train4_bas_dat <- train4[,names(train4) %in% noncor_covars2]
+train5_bas_dat <- train5[,names(train5) %in% noncor_covars2]
 
-test1_bas_dat <- testing1[,names(testing1) %in% noncor_covars]
-test2_bas_dat <- testing2[,names(testing2) %in% noncor_covars]
-test3_bas_dat <- testing3[,names(testing3) %in% noncor_covars]
-test4_bas_dat <- testing4[,names(testing4) %in% noncor_covars]
-test5_bas_dat <- testing5[,names(testing5) %in% noncor_covars]
+test1_bas_dat <- testing1[,names(testing1) %in% noncor_covars2]
+test2_bas_dat <- testing2[,names(testing2) %in% noncor_covars2]
+test3_bas_dat <- testing3[,names(testing3) %in% noncor_covars2]
+test4_bas_dat <- testing4[,names(testing4) %in% noncor_covars2]
+test5_bas_dat <- testing5[,names(testing5) %in% noncor_covars2]
 
 #remove rows missing values???
 
