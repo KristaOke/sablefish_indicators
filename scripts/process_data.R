@@ -416,8 +416,9 @@ noncor_covars3 <- c("Year", "ln_rec",
 
 
 noncor3_dat <- scaled_dat[,names(scaled_dat) %in% noncor_covars3]
+noncor3_dat$complete <- complete.cases(noncor3_dat)
 
-noncor3_long <- noncor3_dat %>% gather(key=type, value=value, -c(Year, ln_rec))
+noncor3_long <- noncor3_dat %>% gather(key=type, value=value, -c(Year, ln_rec, complete))
 
 noncor3_long$type[which(noncor3_long$type=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
 noncor3_long$type[which(noncor3_long$type=="Smr_temp_250m_GOA_scaled")] <- "Summer 250m temperature GOA"
@@ -436,6 +437,15 @@ noncor3_long$type[which(noncor3_long$type=="smr_adult_cond_scaled")] <- "Summer 
 #plot years
   ggplot(noncor3_long, aes(Year, type, size=value, col=value)) + geom_point() + theme_bw() + theme(legend.position = "none") +
     xlab("Year class") + ylab("")
+  
+  #plot data
+  
+  ggplot(noncor3_long, aes(value, ln_rec)) + geom_point() + facet_wrap(~type, nrow=4) +
+    xlab("Scaled value") + ylab("ln(Recruitment)")
+  
+  ggplot(noncor3_long, aes(value, ln_rec, col=complete)) + geom_point() + facet_wrap(~type, nrow=4) +
+    xlab("Scaled value") + ylab("ln(Recruitment)") + scale_colour_manual(values=c("red", "black"))
+  
 
 #OLD======
 
