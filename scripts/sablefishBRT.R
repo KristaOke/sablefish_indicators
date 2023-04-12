@@ -240,17 +240,30 @@ testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.na
 #during collinearity check
 
 
-train1_brt_dat <- train1[,names(train1) %in% noncor_covars]
-train2_brt_dat <- train2[,names(train2) %in% noncor_covars]
-train3_brt_dat <- train3[,names(train3) %in% noncor_covars]
-train4_brt_dat <- train4[,names(train4) %in% noncor_covars]
-train5_brt_dat <- train5[,names(train5) %in% noncor_covars]
+noncor_covars3 <- c("Year", "ln_rec",
+                    "Spr_ST_SEBS_scaled"  ,
+                    "Smr_temp_250m_GOA_scaled"  , 
+                    "Spr_chlA_biom_GOA_scaled"  , 
+                    "Spr_chlA_biom_SEBS_scaled"  ,  
+                    "Spr_chlA_peak_GOA_scaled" ,
+                    "Spr_chlA_peak_SEBS_scaled" ,
+                    "ann_Copepod_size_EGOA_scaled" ,
+                    "YOY_grwth_Middleton_scaled",
+                    "Smr_CPUE_juv_ADFG_ln_scaled"  ,      
+                    "smr_adult_cond_scaled")
 
-test1_brt_dat <- testing1[,names(testing1) %in% noncor_covars]
-test2_brt_dat <- testing2[,names(testing2) %in% noncor_covars]
-test3_brt_dat <- testing3[,names(testing3) %in% noncor_covars]
-test4_brt_dat <- testing4[,names(testing4) %in% noncor_covars]
-test5_brt_dat <- testing5[,names(testing5) %in% noncor_covars]
+
+train1_brt_dat <- train1[,names(train1) %in% noncor_covars3]
+train2_brt_dat <- train2[,names(train2) %in% noncor_covars3]
+train3_brt_dat <- train3[,names(train3) %in% noncor_covars3]
+train4_brt_dat <- train4[,names(train4) %in% noncor_covars3]
+train5_brt_dat <- train5[,names(train5) %in% noncor_covars3]
+
+test1_brt_dat <- testing1[,names(testing1) %in% noncor_covars3]
+test2_brt_dat <- testing2[,names(testing2) %in% noncor_covars3]
+test3_brt_dat <- testing3[,names(testing3) %in% noncor_covars3]
+test4_brt_dat <- testing4[,names(testing4) %in% noncor_covars3]
+test5_brt_dat <- testing5[,names(testing5) %in% noncor_covars3]
 
 #BRT cannot include NAs in response variable
 #these are often at the END of the time series
