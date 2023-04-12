@@ -357,7 +357,7 @@ vifs <- car::vif(vmod) #not terrible
 vmod2 <- lm(ln_rec ~ #ann_heatwave_GOA_scaled  + #Spr_ST_GOA_scaled +                
               Spr_ST_SEBS_scaled +
              Smr_temp_250m_GOA_scaled  + 
-            # Spr_chlA_biom_GOA_scaled +  
+             Spr_chlA_biom_GOA_scaled +  
               Spr_chlA_biom_SEBS_scaled    +  
              Spr_chlA_peak_GOA_scaled  + Spr_chlA_peak_SEBS_scaled    +  
               ann_Copepod_size_EGOA_scaled  +  
@@ -366,7 +366,7 @@ vmod2 <- lm(ln_rec ~ #ann_heatwave_GOA_scaled  + #Spr_ST_GOA_scaled +
              YOY_grwth_Middleton_scaled  +     
              Smr_CPUE_juv_ADFG_ln_scaled   + #Smr_CPUE_juv_GOA_ln_scaled   +      
              #spawner_mean_age_scaled +  spawner_age_evenness_scaled +       
-             Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
+            # Smr_condition_fem_age4_GOA_scaled + #arrowtooth_biomass_scaled  +        
              # sablefish_bycatch_arrowtooth_fishery_scaled + 
              smr_adult_cond_scaled , data=scaled_only)
 
@@ -374,7 +374,7 @@ vmod2 <- lm(ln_rec ~ #ann_heatwave_GOA_scaled  + #Spr_ST_GOA_scaled +
 vifs2 <- car::vif(vmod2) #all fine!
 
 
-
+#UPDATE HERE
 #what are the indicators that remain?
 noncor_covars <- c("Year", "ln_rec",
                    "ann_heatwave_GOA_scaled"  ,
@@ -401,6 +401,43 @@ noncor_covars2 <- c("Year", "ln_rec",
                    "Smr_condition_fem_age4_GOA_scaled" ,
                    "smr_adult_cond_scaled")
 
+#heatwave index and age 4 condition removed
+noncor_covars3 <- c("Year", "ln_rec",
+                    "Spr_ST_SEBS_scaled"  ,
+                    "Smr_temp_250m_GOA_scaled"  , 
+                    "Spr_chlA_biom_GOA_scaled"  , 
+                    "Spr_chlA_biom_SEBS_scaled"  ,  
+                    "Spr_chlA_peak_GOA_scaled" ,
+                    "Spr_chlA_peak_SEBS_scaled" ,
+                    "ann_Copepod_size_EGOA_scaled" ,
+                    "YOY_grwth_Middleton_scaled",
+                    "Smr_CPUE_juv_ADFG_ln_scaled"  ,      
+                    "smr_adult_cond_scaled")
+
+
+noncor3_dat <- scaled_dat[,names(scaled_dat) %in% noncor_covars3]
+
+noncor3_long <- noncor3_dat %>% gather(key=type, value=value, -c(Year, ln_rec))
+
+noncor3_long$type[which(noncor3_long$type=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
+noncor3_long$type[which(noncor3_long$type=="Smr_temp_250m_GOA_scaled")] <- "Summer 250m temperature GOA"
+noncor3_long$type[which(noncor3_long$type=="Spr_chlA_biom_GOA_scaled")] <- "Spring chlorophyll A biomass GOA"
+noncor3_long$type[which(noncor3_long$type=="Spr_chlA_biom_SEBS_scaled")] <- "Spring chlorophyll A biomass SEBS"
+noncor3_long$type[which(noncor3_long$type=="Spr_chlA_peak_GOA_scaled")] <- "Spring chlorophyll A peak GOA"
+noncor3_long$type[which(noncor3_long$type=="Spr_chlA_peak_SEBS_scaled")] <- "Spring chlorophyll A peak SEBS"
+noncor3_long$type[which(noncor3_long$type=="ann_Copepod_size_EGOA_scaled")] <- "Annual copepod community size EGOA"
+noncor3_long$type[which(noncor3_long$type=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
+noncor3_long$type[which(noncor3_long$type=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
+noncor3_long$type[which(noncor3_long$type=="smr_adult_cond_scaled")] <- "Summer adult condition"
+
+
+
+
+#plot years
+  ggplot(noncor3_long, aes(Year, type, size=value, col=value)) + geom_point() + theme_bw() + theme(legend.position = "none") +
+    xlab("Year class") + ylab("")
+
+#OLD======
 
 #now automate the process
 
