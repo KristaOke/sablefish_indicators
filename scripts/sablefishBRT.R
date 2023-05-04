@@ -229,6 +229,9 @@ testing3 <- read.csv(file=paste(wd,"/data/dataset_testing3.csv", sep=""), row.na
 testing4 <- read.csv(file=paste(wd,"/data/dataset_testing4.csv", sep=""), row.names = 1)
 testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.names = 1)
 
+scaled <- read.csv(file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""), row.names = 1)
+
+
 #DATA CONTROL SECTION----
 
 #select covariates
@@ -265,6 +268,8 @@ test3_brt_dat <- testing3[,names(testing3) %in% noncor_covars3]
 test4_brt_dat <- testing4[,names(testing4) %in% noncor_covars3]
 test5_brt_dat <- testing5[,names(testing5) %in% noncor_covars3]
 
+scaled_brt_dat <- scaled[,names(scaled) %in% noncor_covars3]
+
 #BRT cannot include NAs in response variable
 #these are often at the END of the time series
 
@@ -280,6 +285,7 @@ test3_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
 test4_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
 test5_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
 
+scaled_brt_dat <- scaled_brt_dat[which(is.na(scaled_brt_dat$ln_rec)==FALSE),]
 
 
 # Fit BRT Model ======================================================
@@ -309,7 +315,10 @@ gbm.perspec(real.fit.1, x=1, y=2) #not working
 summary(real.fit.1)
 gbm.simplify(real.fit.1, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
 gbm.interactions(real.fit.1)
-perf_n <- gbm.perf(real.fit.1)[1] #optimal # trees 264 but that's pretty low
+perf_n <- gbm.perf(real.fit.1)[1] #optimal # trees 139 but that's pretty low
+
+par(mar = c(5, 15, 2, 2))
+summary(real.fit.1, las=1)
 
 preds <- predict.gbm(real.fit.1, test1_brt_dat, n.trees = perf_n, type="response")
 
@@ -318,9 +327,49 @@ dev <- calc.deviance(obs=test1_brt_dat$ln_rec, pred=test1_brt_dat$predictions, f
 
 
 test1_brt_dat$predictions <- preds
-ggplot(test1_brt_dat, aes(predictions, ln_rec)) + geom_point() + geom_abline()
+ggplot(test1_brt_dat, aes(ln_rec, predictions)) + geom_point() + geom_abline() + theme_bw() + ylab("Predicted ln(Recruitment)") +
+  xlab("Observed ln(Recruitment)")
 
 sum_squared_errors <- sum((preds-test1_brt_dat$ln_rec)^2, na.rm=TRUE)
+
+#plot within sample predictions----
+
+withinpred <- predict.gbm(real.fit.1, train1_brt_dat[which(train1_brt_dat$Year>1980),c(3:12)])
+plotwithin <- train1_brt_dat[which(train1_brt_dat$Year>1980),]
+plotwithin$predicted <- withinpred
+
+ggplot(plotwithin, aes(Year, ln_rec)) + geom_point(aes(col="red")) + 
+  geom_line() + geom_point(aes(Year, predicted)) + geom_line(aes(Year, predicted)) + theme_bw()
+
+
+#from BAS
+# Plot Model Predictions vs. Observed ==============================
+#pdf(file.path(dir.figs,"Model Fit.pdf"), height=6, width=9)
+par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
+
+# Omit NAs
+dat.temp <- plotwithin
+
+plot(x=dat.temp$ln_rec, y=plotwithin$predicted,
+     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+# plot(x=plotwithin$fit, y=plotwithin$Ybma) 
+abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+
+# Timeseries
+plot(x=dat.temp$Year, y=dat.temp$ln_rec,
+     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+grid(lty=3, col='dark gray')
+points(x=dat.temp$Year, y=dat.temp$ln_rec,
+       pch=21, bg=rgb(1,0,0,alpha=0.5))
+lines(x=dat.temp$Year, y=plotwithin$predicted, lwd=3, col=rgb(0,0,1, alpha=0.5))
+#points(x=dat.temp$Year, y=plotwithin$predicted,
+ #      pch=21, bg=rgb(0,1,0,alpha=0.5))
+
+legend('topleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
+                                                                 rgb(0,0,1, alpha=0.5)), bg="white")
+
 
 
 #try different interaction depths, compare SSE
@@ -372,44 +421,15 @@ sum_squared_errors <- sum((preds-test1_brt_dat$ln_rec)^2, na.rm=TRUE)
 
 
 
-#REPEAT ON SEBS NOT HEATWAVE=====
-
-
-train1_brt_dat <- train1[,names(train1) %in% noncor_covars2]
-train2_brt_dat <- train2[,names(train2) %in% noncor_covars2]
-train3_brt_dat <- train3[,names(train3) %in% noncor_covars2]
-train4_brt_dat <- train4[,names(train4) %in% noncor_covars2]
-train5_brt_dat <- train5[,names(train5) %in% noncor_covars2]
-
-test1_brt_dat <- testing1[,names(testing1) %in% noncor_covars2]
-test2_brt_dat <- testing2[,names(testing2) %in% noncor_covars2]
-test3_brt_dat <- testing3[,names(testing3) %in% noncor_covars2]
-test4_brt_dat <- testing4[,names(testing4) %in% noncor_covars2]
-test5_brt_dat <- testing5[,names(testing5) %in% noncor_covars2]
-
-#BRT cannot include NAs in response variable
-#these are often at the END of the time series
-
-train1_brt_dat <- train1_brt_dat[which(is.na(train1_brt_dat$ln_rec)==FALSE),]
-train2_brt_dat <- train2_brt_dat[which(is.na(train2_brt_dat$ln_rec)==FALSE),]
-train3_brt_dat <- train3_brt_dat[which(is.na(train3_brt_dat$ln_rec)==FALSE),]
-train4_brt_dat <- train4_brt_dat[which(is.na(train4_brt_dat$ln_rec)==FALSE),]
-train5_brt_dat <- train5_brt_dat[which(is.na(train5_brt_dat$ln_rec)==FALSE),]
-
-test1_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
-test2_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
-test3_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
-test4_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
-test5_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
-
-
+#REPEAT ON REDUCED SET=====
 
 # Fit BRT Model ======================================================
 # if(fit==TRUE) {
 
 res1 <- "ln_rec"
 
-fit.covars <- names(train1_brt_dat[,!names(train1_brt_dat) %in% c("Year", "ln_rec")]) 
+fit.covars <- names(train1_brt_dat[,names(train1_brt_dat) %in% c("Spr_ST_SEBS_scaled", "Smr_CPUE_juv_ADFG_ln_scaled",
+                                                                 "YOY_grwth_Middleton_scaled", "smr_adult_cond_scaled")]) 
 
 form.covars <- paste(fit.covars, collapse=" + ")
 form <- paste(res1, "~",form.covars)
@@ -419,7 +439,7 @@ form <- paste(res1, "~",form.covars)
 
 #see goood tutorial on https://afit-r.github.io/tree_based_methods
 
-real.fit.1 <- gbm.step(data=train1_brt_dat, gbm.y=2, gbm.x=3:12, family='gaussian', 
+real.fit.1 <- gbm.step(data=train1_brt_dat, gbm.y=2, gbm.x=c(3,11,10,12), family='gaussian', 
                        #real.fit.1 <- gbm.step(data=train, gbm.y=10, gbm.x=11:18, family='gaussian', 
                        tree.complexity = 1, #b/c very small sample
                        learning.rate = 0.005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
@@ -493,6 +513,15 @@ gbm.plot.fits(refit.1.1.1)
 gbm.perspec(refit.1.1.1, x=1, y=8) #not working
 summary(refit.1.1.1)
 
+#plot within sample predictions----
+
+withinpred <- predict.gbm(real.fit.1, train1_brt_dat[,c(3,11,10,12)])
+plotwithin <- train1_brt_dat
+plotwithin$predicted <- withinpred
+
+ggplot(plotwithin, aes(Year, ln_rec)) + geom_point(aes(col="red")) + 
+  geom_line() + geom_point(aes(Year, predicted)) + geom_line(aes(Year, predicted)) + theme_bw()
+                          
 
 #need to also check if different distributions give better SSE
 
