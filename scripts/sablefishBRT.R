@@ -643,10 +643,132 @@ summary(refit.1.1.1)
 
 
 
+#Fit entire time series then do LOO====================================================
+
+#
+res1 <- "ln_rec"
+
+fit.covars <- names(scaled_brt_dat[,!names(scaled_brt_dat) %in% c("Year", "ln_rec")]) 
+
+form.covars <- paste(fit.covars, collapse=" + ")
+form <- paste(res1, "~",form.covars)
+
+
+#see goood tutorial on https://afit-r.github.io/tree_based_methods
+
+whole.fit.1 <- gbm.step(data=scaled_brt_dat, gbm.y=res1, gbm.x=fit.covars, family='gaussian', 
+                       #real.fit.1 <- gbm.step(data=train, gbm.y=10, gbm.x=11:18, family='gaussian', 
+                       tree.complexity = 1, #b/c very small sample
+                       learning.rate = 0.005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                       bag.fraction = 0.8,
+                       n.minobsinnode=1) #won't run with bag fraction lower than 0.8 for training dataset of 34 years
+gbm.plot(whole.fit.1)
+gbm.plot.fits(whole.fit.1)
+gbm.perspec(whole.fit.1, x=1, y=2) #not working
+summary(whole.fit.1)
+gbm.simplify(whole.fit.1, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
+gbm.interactions(whole.fit.1)
+perf_n <- gbm.perf(whole.fit.1)[1] #optimal # trees 170 but that's pretty low
+
+par(mar = c(5, 15, 2, 2))
+summary(whole.fit.1, las=1)
+
+preds <- predict.gbm(whole.fit.1, scaled_brt_dat, n.trees = perf_n, type="response")
+
+# dev <- calc.deviance(obs=test1_brt_dat$ln_rec, pred=scaled_brt_dat$predictions, family="gaussian", 
+#                      calc.mean=TRUE)
+
+
+test1_brt_dat$predictions <- preds
+# ggplot(test1_brt_dat, aes(ln_rec, predictions)) + geom_point() + geom_abline() + theme_bw() + ylab("Predicted ln(Recruitment)") +
+#   xlab("Observed ln(Recruitment)")
+
+#sum_squared_errors <- sum((preds-test1_brt_dat$ln_rec)^2, na.rm=TRUE)
+
+#plot within sample predictions----
+
+withinpred <- predict.gbm(whole.fit.1, scaled_brt_dat[which(scaled_brt_dat$Year>1980),c(3:12)])
+plotwithin <- scaled_brt_dat[which(scaled_brt_dat$Year>1980),]
+plotwithin$predicted <- withinpred
+
+ggplot(plotwithin, aes(Year, ln_rec)) + geom_point(aes(col="red")) + 
+  geom_line() + geom_point(aes(Year, predicted)) + geom_line(aes(Year, predicted)) + theme_bw()
+
+
+#from BAS
+# Plot Model Predictions vs. Observed ==============================
+#pdf(file.path(dir.figs,"Model Fit.pdf"), height=6, width=9)
+par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
+
+# Omit NAs
+dat.temp <- plotwithin
+
+plot(x=dat.temp$ln_rec, y=plotwithin$predicted,
+     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+# plot(x=plotwithin$fit, y=plotwithin$Ybma) 
+abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+
+# Timeseries
+plot(x=dat.temp$Year, y=dat.temp$ln_rec,
+     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+grid(lty=3, col='dark gray')
+points(x=dat.temp$Year, y=dat.temp$ln_rec,
+       pch=21, bg=rgb(1,0,0,alpha=0.5))
+lines(x=dat.temp$Year, y=plotwithin$predicted, lwd=3, col=rgb(0,0,1, alpha=0.5))
+#points(x=dat.temp$Year, y=plotwithin$predicted,
+#      pch=21, bg=rgb(0,1,0,alpha=0.5))
+
+legend('topleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
+                                                                 rgb(0,0,1, alpha=0.5)), bg="white")
 
 
 
+refit.whole <- gbm(formula(form), data=scaled_brt_dat, distribution='gaussian', 
+               n.trees=10000, interaction.depth=1, n.minobsinnode=1,
+               bag.fraction = 0.5,
+               shrinkage=0.0001)
+
+gbm.plot(refit.whole)
+gbm.plot.fits(refit.whole)
+gbm.perspec(refit.whole, x=1, y=8) #not working
+summary(refit.whole)
 
 
 
+#try different interaction depths, compare SSE
+(IntDepthG <- sapply(1:8, function(x) {
+  # fit model
+  mod_boost <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
+                        data = scaled_brt_dat,
+                        family = "gaussian",                       
+                        tree.complexity = 1, #b/c very small sample
+                        learning.rate = 0.00005, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                        bag.fraction = 0.7,
+                        n.minobsinnode=1,
+                        n.folds = 5,
+                        interaction.depth=x)
+  # calculate best value for number of trees
+  bestHit <- gbm.perf(mod_boost)[1]
+  # calculate the sum of squared errors
+  boostSSE <- sum((predict(mod_boost, scaled_brt_dat, n.trees = bestHit) - scaled_brt_dat$ln_rec)^2,
+                  na.rm = TRUE)
+  return(boostSSE)}))
+
+#changing interaction depth doesn't make big difference, depth of 2 is best at 5.264870 but
+#not much different than the original sse at 5.266896
+
+whole2 <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
+                      data = scaled_brt_dat,
+                      family = "gaussian",                       
+                      tree.complexity = 1, #b/c very small sample
+                      learning.rate = 0.0001, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                      bag.fraction = 0.8,
+                      n.minobsinnode=1,
+                      n.folds = 5,
+                      interaction.depth=1)
+gbm.plot(whole2)
+gbm.plot.fits(whole2)
+summary(whole2)
 
