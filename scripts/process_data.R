@@ -152,6 +152,7 @@ scaled_dat <- dat %>% #group_by(Year) %>%
 write.csv(scaled_dat, file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""))
 
 
+
 #split data======
 
 #NEED TO SUBSET out a training dataset
@@ -241,7 +242,32 @@ scaled_only <- scaled_dat[,c(1,18, 24:43)]
 
 scal_long <- pivot_longer(scaled_only, -Year, names_to = "covar", values_to = "value")
 
-ggplot(scal_long, aes(Year, covar, size=value)) + geom_point()
+scal_long$covar[which(scal_long$covar=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
+scal_long$covar[which(scal_long$covar=="Smr_temp_250m_GOA_scaled")] <- "Summer 250m temperature GOA"
+scal_long$covar[which(scal_long$covar=="Spr_chlA_biom_GOA_scaled")] <- "Spring chlorophyll A biomass GOA"
+scal_long$covar[which(scal_long$covar=="Spr_chlA_biom_SEBS_scaled")] <- "Spring chlorophyll A biomass SEBS"
+scal_long$covar[which(scal_long$covar=="Spr_chlA_peak_GOA_scaled")] <- "Spring chlorophyll A peak GOA"
+scal_long$covar[which(scal_long$covar=="Spr_chlA_peak_SEBS_scaled")] <- "Spring chlorophyll A peak SEBS"
+scal_long$covar[which(scal_long$covar=="ann_Copepod_size_EGOA_scaled")] <- "Annual copepod community size EGOA"
+scal_long$covar[which(scal_long$covar=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
+scal_long$covar[which(scal_long$covar=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
+scal_long$covar[which(scal_long$covar=="smr_adult_cond_scaled")] <- "Summer adult condition"
+scal_long$covar[which(scal_long$covar=="Spr_ST_GOA_scaled")] <- "Spring SST GOA"
+scal_long$covar[which(scal_long$covar=="spawner_mean_age_scaled")] <- "Spawner mean age"
+scal_long$covar[which(scal_long$covar=="spawner_age_evenness_scaled")] <- "Spawner age evenness"
+scal_long$covar[which(scal_long$covar=="Smr_euph_abun_Kod_scaled")] <- "Summer euphausiid abundance Kodiak"
+scal_long$covar[which(scal_long$covar=="Smr_CPUE_juv_GOA_ln_scaled")] <- "Summer juvenile CPUE GOA"
+scal_long$covar[which(scal_long$covar=="Smr_condition_fem_age4_GOA_scaled")] <- "Summer condition age4 females GOA"
+scal_long$covar[which(scal_long$covar=="sablefish_bycatch_arrowtooth_fishery_scaled")] <- "Bycatch in arrowtooth fishery"
+scal_long$covar[which(scal_long$covar=="arrowtooth_biomass_scaled")] <- "Arrowtooth biomass"
+scal_long$covar[which(scal_long$covar=="ann_heatwave_GOA_scaled")] <- "Annual heatwave index GOA"
+scal_long$covar[which(scal_long$covar=="ann_Copepod_size_WGOA_scaled")] <- "Annual Copepod size WGOA"
+scal_long$covar[which(scal_long$covar=="_scaled")] <- ""
+
+
+#time series plot all indicators----
+ggplot(scal_long[which(scal_long$covar!="ln_rec"),], aes(Year, covar, size=value)) + geom_point() +
+  theme_bw() + theme(legend.position = "none") + xlab("Year class") + ylab("")
 
 
 #create subsets without highly correlated indicators---------------
