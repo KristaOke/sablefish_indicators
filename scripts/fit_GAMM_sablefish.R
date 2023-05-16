@@ -255,6 +255,18 @@ mod_trainshort <- gam(ln_rec ~ s(Spr_ST_SEBS_scaled, k=4)  +
                        smr_adult_cond_scaled, data=train1_gam_dat)
 summary(mod_trainshort)
 
+mod_trainshort1 <- gam(ln_rec ~ Spr_ST_SEBS_scaled  +      
+                        #Smr_temp_250m_GOA_scaled +       
+                        #Spr_chlA_biom_GOA_scaled  +     
+                        #Spr_chlA_biom_SEBS_scaled  +     
+                        #Spr_chlA_peak_GOA_scaled  +     
+                        #Spr_chlA_peak_SEBS_scaled  +  
+                        YOY_grwth_Middleton_scaled +     
+                        #ann_Copepod_size_EGOA_scaled  +     
+                        s(Smr_CPUE_juv_ADFG_ln_scaled, k=4) +    
+                        smr_adult_cond_scaled, data=train1_gam_dat)
+summary(mod_trainshort1)
+
 mod_trainshort2 <- gam(ln_rec ~ Spr_ST_SEBS_scaled  +      
                         #Smr_temp_250m_GOA_scaled +       
                         #Spr_chlA_biom_GOA_scaled  +     
