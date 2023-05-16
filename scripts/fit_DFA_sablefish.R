@@ -52,6 +52,8 @@ testing3 <- read.csv(file=paste(wd,"/data/dataset_testing3.csv", sep=""), row.na
 testing4 <- read.csv(file=paste(wd,"/data/dataset_testing4.csv", sep=""), row.names = 1)
 testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.names = 1)
 
+scaled <- read.csv(file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""), row.names = 1)
+
 #DATA CONTROL SECTION----
 
 #select the z-scored columns, no recruitment
@@ -61,6 +63,7 @@ train3_dfa_dat <- train3[,c(1,24:43)]
 train4_dfa_dat <- train4[,c(1,24:43)]
 train5_dfa_dat <- train5[,c(1,24:43)]
 
+scaled_dfa_dat <- scaled[,c(1,24:43)]
 
 #remove problem covariates=====
 
@@ -95,6 +98,13 @@ train5_dfa_dat <- train5_dfa_dat[,!names(train5_dfa_dat) %in% c("Smr_euph_abun_K
                                                                 "arrowtooth_biomass_scaled",
                                                                 "Smr_condition_fem_age4_GOA_scaled")]
 
+scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
+                                                                "spawner_mean_age_scaled",
+                                                                "spawner_age_evenness_scaled",
+                                                                "arrowtooth_biomass_scaled",
+                                                                "Smr_condition_fem_age4_GOA_scaled")]
+
+
 
 #manupulate data for DFA========
 
@@ -105,12 +115,16 @@ train3_dfa_dat$Year==train3_dfa_dat$Year[order(train3_dfa_dat$Year)] #SHOULD BE 
 train4_dfa_dat$Year==train4_dfa_dat$Year[order(train4_dfa_dat$Year)] #SHOULD BE ALL TRUE
 train5_dfa_dat$Year==train5_dfa_dat$Year[order(train5_dfa_dat$Year)] #SHOULD BE ALL TRUE
 
+scaled_dfa_dat$Year==scaled_dfa_dat$Year[order(scaled_dfa_dat$Year)] #SHOULD BE ALL TRUE
+
 #then drop Year column
 train1_dfa_dat <- train1_dfa_dat[,!names(train1_dfa_dat) %in% c("Year")]
 train2_dfa_dat <- train2_dfa_dat[,!names(train2_dfa_dat) %in% c("Year")]
 train3_dfa_dat <- train3_dfa_dat[,!names(train3_dfa_dat) %in% c("Year")]
 train4_dfa_dat <- train4_dfa_dat[,!names(train4_dfa_dat) %in% c("Year")]
 train5_dfa_dat <- train5_dfa_dat[,!names(train5_dfa_dat) %in% c("Year")]
+
+scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Year")]
 
 
 z.mat1 <- t(as.matrix(train1_dfa_dat))
@@ -134,10 +148,11 @@ scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Smr_euph_abun_K
 scaled_dfa_dat$Year==scaled_dfa_dat$Year[order(scaled_dfa_dat$Year)] #SHOULD BE ALL TRUE
 
 #then drop Year column
-scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Year")]
+#scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Year")]
 
 z.mat1 <- t(as.matrix(scaled_dfa_dat))
 colnames(z.mat1) <- z.mat1[1,]
+z.mat1 <- z.mat1[-1,]
 
 
 #fit model========
@@ -183,6 +198,7 @@ model.data1 <- model.data1 %>%
   arrange(dAICc)
 model.data1
 
+write_csv(model.data1, file = paste(wd,"/scripts/model_comparison_DFA_wholedataset.csv", sep=""))
 
 
 #---
@@ -285,7 +301,7 @@ for (i in 1:mm) {
   ## add panel labels
   mtext(paste("State", i), side = 3, line = 0.5)
   #axis(1, 12 * (0:dim(all.clim.dat)[2]) + 1, yr_frst + 0:dim(all.clim.dat)[2])
-  axis(1, 1:38, yr_frst + 0:dim(z.mat1)[2])
+  axis(1, 1:47, yr_frst + 0:dim(z.mat1)[2])
 }
 ## plot the loadings
 clr <- c("brown", 
