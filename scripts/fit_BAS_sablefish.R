@@ -3,7 +3,7 @@
 #
 #
 #Krista, March 2023
-#BORROWING HEAVILY from scripts developped by Curry Cunningham for ESP analyses
+#BORROWING HEAVILY from scripts developed by Curry Cunningham for ESP analyses
 #
 #==================================================================================================
 #NOTES:
@@ -56,6 +56,9 @@ testing3 <- read.csv(file=paste(wd,"/data/dataset_testing3.csv", sep=""), row.na
 testing4 <- read.csv(file=paste(wd,"/data/dataset_testing4.csv", sep=""), row.names = 1)
 testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.names = 1)
 
+scaled <- read.csv(file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""), row.names = 1)
+
+
 #DATA CONTROL SECTION----
 
 #select covariates
@@ -91,6 +94,8 @@ test3_bas_dat <- testing3[,names(testing3) %in% noncor_covars3]
 test4_bas_dat <- testing4[,names(testing4) %in% noncor_covars3]
 test5_bas_dat <- testing5[,names(testing5) %in% noncor_covars3]
 
+scaled_bas_dat <- scaled[,names(scaled) %in% noncor_covars3]
+
 #remove rows missing values???
 
 # train1_brt_dat <- train1_brt_dat[which(is.na(train1_brt_dat$ln_rec)==FALSE),]
@@ -111,11 +116,11 @@ test5_bas_dat <- testing5[,names(testing5) %in% noncor_covars3]
 
 #Determine Covariates
 
-covars <- names(train1_bas_dat)[-which(names(train1_bas_dat) %in% c("Year", "ln_rec"))]
+covars <- names(scaled_bas_dat)[-which(names(scaled_bas_dat) %in% c("Year", "ln_rec"))]
 
 n.cov <- length(covars)
 
-dat.temp <- train1_bas_dat[-which(names(train1_bas_dat) %in% c("Year"))]
+dat.temp <- scaled_bas_dat[-which(names(scaled_bas_dat) %in% c("Year"))]
 
 #more parameters than data, let's try dropping the shortest time series
 #Smr_temp_250m_GOA_scaled
@@ -128,6 +133,7 @@ bas.lm <-  bas.lm(ln_rec ~ ., data=dat.temp,
                   method='BAS', MCMC.iterations=1e5, thin=10)
 
 summary(bas.lm)
+image(bas.lm, rotate=F)
 
 plot(bas.lm, which = 4, ask=FALSE, caption="", sub.caption="")
 plot(coef(bas.lm),  ask=FALSE)
@@ -137,10 +143,10 @@ plot(bas.lm, which=4)
 # Plot Model Predictions vs. Observed ==============================
 #pdf(file.path(dir.figs,"Model Fit.pdf"), height=6, width=9)
 par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
-pred.bas <- predict(bas.lm, estimator="BMA")
+pred.bas <- predict(bas.lm, estimator="BMA", se.fit=T)
 
 # Omit NAs
-dat.temp.na.omit <- na.omit(train1_bas_dat[-which(names(train1_bas_dat) %in% c("Smr_temp_250m_GOA_scaled"))])
+dat.temp.na.omit <- na.omit(scaled_bas_dat[-which(names(scaled_bas_dat) %in% c("Smr_temp_250m_GOA_scaled"))])
 
 plot(x=dat.temp.na.omit$ln_rec, y=pred.bas$Ybma,
      xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
@@ -156,6 +162,10 @@ grid(lty=3, col='dark gray')
 points(x=dat.temp.na.omit$Year, y=dat.temp.na.omit$ln_rec,
        pch=21, bg=rgb(1,0,0,alpha=0.5))
 lines(x=dat.temp.na.omit$Year, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
+points(x=dat.temp.na.omit$Year, y=pred.bas$Ybma,
+       pch=21, bg=rgb(0,1,0,alpha=0.5))
+#conf_int <- confint(pred.bas, parm = "pred")
+#plotCI(x=dat.temp.na.omit$Year, y=pred.bas$Ybma,li=conf_int[,1], ui=conf_int[,2])
 
 legend('topleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
                                                              rgb(0,0,1, alpha=0.5)), bg="white")
@@ -314,7 +324,7 @@ ggsave(file=file.path(dir.figs,"BAS_noRainbow.png"), plot=g3.b, height=5, width=
 
 #Determine Covariates
 
-covars <- names(train1_bas_dat)[which(names(train1_bas_dat) %in% c("Year", "ln_rec",
+covars <- names(scaled_bas_dat)[which(names(scaled_bas_dat) %in% c("Year", "ln_rec",
                                                                    "Spr_ST_SEBS_scaled",
                                                                    "smr_adult_cond_scaled",
                                                                    "YOY_grwth_Middleton_scaled",
@@ -322,7 +332,7 @@ covars <- names(train1_bas_dat)[which(names(train1_bas_dat) %in% c("Year", "ln_r
 
 n.cov <- length(covars)
 
-dat.temp <- train1_bas_dat[-which(names(train1_bas_dat) %in% c("Year"))]
+dat.temp <- scaled_bas_dat[-which(names(scaled_bas_dat) %in% c("Year"))]
 dat.temp <- dat.temp[which(names(dat.temp) %in% covars)]
 
 # Bayesian Model Selection
@@ -344,8 +354,8 @@ par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 pred.bas <- predict(bas.lm, estimator="BMA")
 
 # Omit NAs
-#dat.temp.na.omit <- na.omit(train1_bas_dat[-which(names(train1_bas_dat) %in% c("Smr_temp_250m_GOA_scaled", "Smr_condition_fem_age4_GOA_scaled"))])
-dat.temp.na.omit <- na.omit(train1_bas_dat[which(names(train1_bas_dat) %in% c("Year", "ln_rec", covars))])
+#dat.temp.na.omit <- na.omit(scaled_bas_dat[-which(names(scaled_bas_dat) %in% c("Smr_temp_250m_GOA_scaled", "Smr_condition_fem_age4_GOA_scaled"))])
+dat.temp.na.omit <- na.omit(scaled_bas_dat[which(names(scaled_bas_dat) %in% c("Year", "ln_rec", covars))])
 
 
 plot(x=dat.temp.na.omit$ln_rec, y=pred.bas$Ybma,
