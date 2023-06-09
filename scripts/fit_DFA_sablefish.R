@@ -213,6 +213,16 @@ model.1 = MARSS(z.mat1, model=model.list.1, z.score=TRUE, form="dfa", control=cn
 #
 autoplot(model.1)
 
+#extract states and SE
+
+model.1_trends <- as.data.frame(colnames(z.mat1))
+colnames(model.1_trends) <- "Year"
+
+model.1_trends$states <- as.vector(model.1$states)
+model.1_trends$states_se <- as.vector(model.1$states.se)
+
+
+
 # and rotate the loadings
 Z.est = coef(model.1, type="matrix")$Z
 H_inv = varimax(coef(model.1, type="matrix")$Z)$rotmat
@@ -410,6 +420,19 @@ cntl.list2 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol
 autoplot(model.2) #says check MARSSresiduals.tt1 warning message
 MARSSresiduals(model.2, type="tt1") #seems like error b/c of NAs creating noninvertable matrix in residuals
 
+#extract states and SE
+
+model.2_trends <- as.data.frame(colnames(z.mat1))
+colnames(model.2_trends) <- "Year"
+
+model.2_trends$state1 <- as.vector(model.2$states[1,])
+model.2_trends$state2 <- as.vector(model.2$states[2,])
+model.2_trends$state1_se <- as.vector(model.2$states.se[1,])
+model.2_trends$state2_se <- as.vector(model.2$states.se[2,])
+
+
+
+
 # and rotate the loadings
 Z.est = coef(model.2, type="matrix")$Z
 H_inv = varimax(coef(model.2, type="matrix")$Z)$rotmat
@@ -583,11 +606,12 @@ for (i in 1:N_ts) {
 
 # now fit best model
 
-model.list.3 = list(A="zero", m=1, R="diagonal and equal") # 
-model.3 = MARSS(z.ind.mat, model=model.list.3, z.score=TRUE, form="dfa", control=cntl.list)
+model.list.3 = list(A="zero", m=1, R="equalvarcov") # 
+model.3 = MARSS(z.mat1, model=model.list.3, z.score=TRUE, form="dfa", control=cntl.list)
 #DOES NOT CONVERGE bump up to 60K iter
 cntl.list3 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
+autoplot(model.3)
 
 # and rotate the loadings
 Z.est = coef(model.3, type="matrix")$Z
@@ -699,113 +723,25 @@ ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 
 
 
+#prep trends for regression-------
+#join trends data to data with recruitment
 
+#model.1
+model.1_trends$Year <- as.numeric(model.1_trends$Year)
+model1_reg_dat <- left_join(model.1_trends, scaled)
 
-#plot obs vs fitted========
+quickmod <- lm(ln_rec ~ states, data=model1_reg_dat)
+anova(quickmod)
+ggplot(model1_reg_dat, aes(states, ln_rec)) + geom_point()+ geom_smooth()
 
-#NOT UPDATED BELOW HERE JAN 2023!!!!!!!!!!!!!!--------------------------------------------
+#model.2
+model.2_trends$Year <- as.numeric(model.2_trends$Year)
+model2_reg_dat <- left_join(model.2_trends, scaled)
 
-#from online course "nwfsc-timeseries.github.io"
+quickmod2 <- lm(ln_rec ~ state1*state2, data=model2_reg_dat)
+anova(quickmod2)
+ggplot(model2_reg_dat, aes(state1, ln_rec)) + geom_point()+ geom_smooth()
+ggplot(model2_reg_dat, aes(state2, ln_rec)) + geom_point() + geom_smooth()
 
-get_DFA_fits <- function(MLEobj, dd = NULL, alpha = 0.05) {
-  ## empty list for results
-  fits <- list()
-  ## extra stuff for var() calcs
-  Ey <- MARSS:::MARSShatyt(MLEobj)
-  ## model params
-  ZZ <- coef(MLEobj, type = "matrix")$Z
-  ## number of obs ts
-  nn <- dim(Ey$ytT)[1]
-  ## number of time steps
-  TT <- dim(Ey$ytT)[2]
-  ## get the inverse of the rotation matrix
-  H_inv <- varimax(ZZ)$rotmat
-  ## check for covars
-  if (!is.null(dd)) {
-    DD <- coef(MLEobj, type = "matrix")$D
-    ## model expectation
-    fits$ex <- ZZ %*% H_inv %*% MLEobj$states + DD %*% dd
-  } else {
-    ## model expectation
-    fits$ex <- ZZ %*% H_inv %*% MLEobj$states
-  }
-  ## Var in model fits
-  VtT <- MARSSkfss(MLEobj)$VtT
-  VV <- NULL
-  for (tt in 1:TT) {
-    RZVZ <- coef(MLEobj, type = "matrix")$R - ZZ %*% VtT[, 
-                                                         , tt] %*% t(ZZ)
-    SS <- Ey$yxtT[, , tt] - Ey$ytT[, tt, drop = FALSE] %*% 
-      t(MLEobj$states[, tt, drop = FALSE])
-    VV <- cbind(VV, diag(RZVZ + SS %*% t(ZZ) + ZZ %*% t(SS)))
-  }
-  SE <- sqrt(VV)
-  ## upper & lower (1-alpha)% CI
-  fits$up <- qnorm(1 - alpha/2) * SE + fits$ex
-  fits$lo <- qnorm(alpha/2) * SE + fits$ex
-  return(fits)
-}
-
-#demean data
-# y_bar <- apply(all.clim.dat, 1, mean, na.rm = TRUE)
-# dat <- all.clim.dat - y_bar
-# rownames(dat) <- rownames(all.clim.dat)
-
-# dat <- scale(log.rec.mat)
-# 
-# head(log.rec.mat)
-# 
-# log.rec.mat.std <- log.rec.mat
-
-# i <- 1
-# for(i in 1:nrow(z.ind.mat)) {
-#   z.ind.mat.std[i,] <- (z.ind.mat[i,]-mean(z.ind.mat[i,], na.rm=TRUE))/sd(z.ind.mat[i,], na.rm=TRUE)  
-# }
-#Double checking
-# apply(z.ind.mat.std, 1, mean, na.rm=TRUE)
-# apply(z.ind.mat.std, 1, sd, na.rm=TRUE)
-dat <- z.ind.mat
-#plot demeaned data
-
-driv <- rownames(z.ind.mat)
-clr <- c("brown", "blue", "darkgreen", "darkred", "purple",
-         "brown", "blue", "darkgreen", "darkred", "purple",
-         "brown", "blue", "darkgreen", "darkred", "purple",
-         "brown", "blue", "darkgreen", "darkred")
-cnt <- 1
-# par(mfrow = c(N_ts, 2), mar = c(1, 1,1.5,1), omi = c(0.1, 
-#                                                      0.1, 0.1, 0.1))
-par(mfrow = c(N_ts, 1), mar = c(1, 1,1.5,1), omi = c(0.1, 
-                                                     0.1, 0.1, 0.1))
-for (i in driv) {
-  plot(dat[i, ], xlab = "", ylab = "", bty = "L", 
-       xaxt = "n", pch = 16, col = clr[cnt], type = "b")
-  axis(1,  (0:dim(z.ind.mat)[2]) + 1, yr_frst + 0:dim(z.ind.mat)[2])
-  title(i)
-  cnt <- cnt + 1
-}
-
-#edit below here (and above!)
-
-## get model fits & CI's
-mod_fit <- get_DFA_fits(model.1)
-## plot the fits
-par(mfrow = c(5, 4), mar = c(1, 1, 1, 1), omi = c(0, 
-                                                  0, 0, 0))
-for (i in 1:N_ts) {
-  up <- mod_fit$up[i, ]
-  mn <- mod_fit$ex[i, ]
-  lo <- mod_fit$lo[i, ]
-  plot(w_ts, mn, xlab = "", xaxt = "n", type = "n", 
-       cex.lab = 1.2, ylim = c(min(lo), max(up)))
-  axis(1,  (0:dim(z.ind.mat)[2]) + 1, yr_frst + 0:dim(z.ind.mat)[2])
-  points(w_ts, dat[i, ], pch = 16, col = clr[i])
-  lines(w_ts, up, col = "darkgray")
-  lines(w_ts, mn, col = "black", lwd = 2)
-  lines(w_ts, lo, col = "darkgray")
-}
-
-
-
-
-
+#can I join to a dataset with non ln rec?
+ggplot(model2_reg_dat, aes(state2, Recruitment)) + geom_point() + geom_smooth()
