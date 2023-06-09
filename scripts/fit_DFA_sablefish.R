@@ -333,8 +333,67 @@ par(mai = c(0.9, 0.9, 0.1, 0.1))
 ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 
 
-
-
+#plot fits
+# get_DFA_fits <- function(MLEobj, dd = NULL, alpha = 0.05) {
+#   ## empty list for results
+#   fits <- list()
+#   ## extra stuff for var() calcs
+#   Ey <- MARSS:::MARSShatyt(MLEobj)
+#   ## model params
+#   ZZ <- coef(MLEobj, type = "matrix")$Z
+#   ## number of obs ts
+#   nn <- dim(Ey$ytT)[1]
+#   ## number of time steps
+#   TT <- dim(Ey$ytT)[2]
+#   ## get the inverse of the rotation matrix
+#   H_inv <- varimax(ZZ)$rotmat
+#   ## check for covars
+#   if (!is.null(dd)) {
+#     DD <- coef(MLEobj, type = "matrix")$D
+#     ## model expectation
+#     fits$ex <- ZZ %*% H_inv %*% MLEobj$states + DD %*% dd
+#   } else {
+#     ## model expectation
+#     fits$ex <- ZZ %*% H_inv %*% MLEobj$states
+#   }
+#   ## Var in model fits
+#   VtT <- MARSSkfss(MLEobj)$VtT
+#   VV <- NULL
+#   for (tt in 1:TT) {
+#     RZVZ <- coef(MLEobj, type = "matrix")$R - ZZ %*% VtT[, 
+#                                                          , tt] %*% t(ZZ)
+#     SS <- Ey$yxtT[, , tt] - Ey$ytT[, tt, drop = FALSE] %*% 
+#       t(MLEobj$states[, tt, drop = FALSE])
+#     VV <- cbind(VV, diag(RZVZ + SS %*% t(ZZ) + ZZ %*% t(SS)))
+#   }
+#   SE <- sqrt(VV)
+#   ## upper & lower (1-alpha)% CI
+#   fits$up <- qnorm(1 - alpha/2) * SE + fits$ex
+#   fits$lo <- qnorm(alpha/2) * SE + fits$ex
+#   return(fits)
+# }
+# 
+# ## get model fits & CI's
+# mod_fit <- get_DFA_fits(model.1) #the function above not set up to work for one trend!
+# ## plot the fits
+# ylbl <- row.names(z.mat1)
+# # par(mfrow = c(N_ts, 1), mai = c(0.5, 0.7, 0.1, 0.1), omi = c(0, 
+# #                                                              0, 0, 0))
+# for (i in 1:N_ts) {
+#   up <- mod_fit$up[i, ]
+#   mn <- mod_fit$ex[i, ]
+#   lo <- mod_fit$lo[i, ]
+#   plot(w_ts, mn, xlab = "", ylab = ylbl[i], xaxt = "n", type = "n", 
+#        cex.lab = 1.2, ylim = c(min(lo), max(up)))
+#   axis(1,  (0:dim(z.mat1)[2]) + 1, 
+#        yr_frst + 0:dim(z.mat1)[2])
+#   points(w_ts, z.mat1[i, ], pch = 16)
+#   lines(w_ts, up, col = "darkgray")
+#   lines(w_ts, mn, col = "black", lwd = 2)
+#   lines(w_ts, lo, col = "darkgray")
+# }
+# 
+# 
 
 
 
@@ -348,6 +407,8 @@ model.2 = MARSS(z.mat1, model=model.list.2, z.score=TRUE, form="dfa", control=cn
 #
 cntl.list2 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
+autoplot(model.2) #says check MARSSresiduals.tt1 warning message
+MARSSresiduals(model.2, type="tt1") #seems like error b/c of NAs creating noninvertable matrix in residuals
 
 # and rotate the loadings
 Z.est = coef(model.2, type="matrix")$Z
@@ -456,8 +517,65 @@ for (i in 1:mm) {
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 
+#plot fits
+get_DFA_fits <- function(MLEobj, dd = NULL, alpha = 0.05) {
+  ## empty list for results
+  fits <- list()
+  ## extra stuff for var() calcs
+  Ey <- MARSS:::MARSShatyt(MLEobj)
+  ## model params
+  ZZ <- coef(MLEobj, type = "matrix")$Z
+  ## number of obs ts
+  nn <- dim(Ey$ytT)[1]
+  ## number of time steps
+  TT <- dim(Ey$ytT)[2]
+  ## get the inverse of the rotation matrix
+  H_inv <- varimax(ZZ)$rotmat
+  ## check for covars
+  if (!is.null(dd)) {
+    DD <- coef(MLEobj, type = "matrix")$D
+    ## model expectation
+    fits$ex <- ZZ %*% H_inv %*% MLEobj$states + DD %*% dd
+  } else {
+    ## model expectation
+    fits$ex <- ZZ %*% H_inv %*% MLEobj$states
+  }
+  ## Var in model fits
+  VtT <- MARSSkfss(MLEobj)$VtT
+  VV <- NULL
+  for (tt in 1:TT) {
+    RZVZ <- coef(MLEobj, type = "matrix")$R - ZZ %*% VtT[, 
+                                                         , tt] %*% t(ZZ)
+    SS <- Ey$yxtT[, , tt] - Ey$ytT[, tt, drop = FALSE] %*% 
+      t(MLEobj$states[, tt, drop = FALSE])
+    VV <- cbind(VV, diag(RZVZ + SS %*% t(ZZ) + ZZ %*% t(SS)))
+  }
+  SE <- sqrt(VV)
+  ## upper & lower (1-alpha)% CI
+  fits$up <- qnorm(1 - alpha/2) * SE + fits$ex
+  fits$lo <- qnorm(alpha/2) * SE + fits$ex
+  return(fits)
+}
 
-
+## get model fits & CI's
+mod_fit <- get_DFA_fits(model.2)
+## plot the fits
+ylbl <- row.names(z.mat1)
+# par(mfrow = c(N_ts, 1), mai = c(0.5, 0.7, 0.1, 0.1), omi = c(0, 
+#                                                              0, 0, 0))
+for (i in 1:N_ts) {
+  up <- mod_fit$up[i, ]
+  mn <- mod_fit$ex[i, ]
+  lo <- mod_fit$lo[i, ]
+  plot(w_ts, mn, xlab = "", ylab = ylbl[i], xaxt = "n", type = "n", 
+       cex.lab = 1.2, ylim = c(min(lo), max(up)))
+  axis(1,  (0:dim(z.mat1)[2]) + 1, 
+       yr_frst + 0:dim(z.mat1)[2])
+  points(w_ts, z.mat1[i, ], pch = 16)
+  lines(w_ts, up, col = "darkgray")
+  lines(w_ts, mn, col = "black", lwd = 2)
+  lines(w_ts, lo, col = "darkgray")
+}
 
 
 #plot third best model=========
