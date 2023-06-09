@@ -13,7 +13,7 @@ library(bayesdfa)
 library(rstan)
 
 chains = 3
-iter = 1000
+iter = 4000
 
 #=============================================================
 #### Define Directory Structure ####
@@ -161,6 +161,9 @@ m_4000_3_noAR <- find_dfa_trends(
   kmin = 1, kmax = 5, chains = chains, compare_normal = TRUE,
   variance = c("equal", "unequal")#, estimate_trend_ar=TRUE
 )
+
+
+saveRDS(m_4000_3_noAR, file=paste(wd,"/output/bayes-dfa_3chain_noAR_4000iter.rds", sep=""))
 
 #seems like best is model 11, 1 trends, equal, normal, let's fit that to look at?
 names(m)
