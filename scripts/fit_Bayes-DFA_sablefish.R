@@ -165,6 +165,18 @@ m_4000_3_noAR <- find_dfa_trends(
 
 saveRDS(m_4000_3_noAR, file=paste(wd,"/output/bayes-dfa_3chain_noAR_4000iter.rds", sep=""))
 
+#let's try 1:5 trends, normal and Student-t distribution, and equal and unequal varianes
+m_6000_3_AR <- find_dfa_trends(
+  y = b.mat2, iter = 6000, scale="z-score",
+  kmin = 1, kmax = 5, chains = chains, compare_normal = TRUE,
+  variance = c("equal", "unequal")#, estimate_trend_ar=TRUE
+)
+
+
+saveRDS(m_6000_3_AR, file=paste(wd,"/output/bayes-dfa_3chain_wAR_6000iter.rds", sep=""))
+
+
+
 #seems like best is model 11, 1 trends, equal, normal, let's fit that to look at?
 names(m)
 
