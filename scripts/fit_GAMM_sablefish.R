@@ -117,298 +117,78 @@ train3_gam_dat <- train3[,names(train3) %in% noncor_covars3]
 train4_gam_dat <- train4[,names(train4) %in% noncor_covars3]
 train5_gam_dat <- train5[,names(train5) %in% noncor_covars3]
 
+scaled_gam_dat <- scaled_dat[,names(scaled_dat) %in% noncor_covars3]
+
 
 
 #new gams-----------
 
-mod_train1_1 <- gam(ln_rec ~ s(Spr_ST_SEBS_scaled, k=4)  +      
-#Smr_temp_250m_GOA_scaled  +      
-#Spr_chlA_biom_SEBS_scaled  +     
-#Spr_chlA_peak_GOA_scaled  +     
-#Spr_chlA_peak_SEBS_scaled  +  
-#ann_Copepod_size_WGOA_scaled +     
+#updated to run on whole dataset Jun 17, 2023
+
+#first try
+mod1_1 <- gam(ln_rec ~ s(Spr_ST_SEBS_scaled, k=4)  +      
+               # s(Smr_temp_250m_GOA_scaled, k=4)  +  #too short    
+                s(Spr_chlA_biom_GOA_scaled, k=4)  + 
+  s(Spr_chlA_biom_SEBS_scaled, k=4)  +     
+  s(Spr_chlA_peak_GOA_scaled, k=4)  +     
+  s(Spr_chlA_peak_SEBS_scaled, k=4)  +  
 s(ann_Copepod_size_EGOA_scaled, k=4)  +     
 s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
-s(Smr_condition_fem_age4_GOA_scaled, k=4) +
-s(smr_adult_cond_scaled, k=4), data=train1_gam_dat)
-gam.check(mod_train1_1) #not good
-summary(mod_train1_1)
+s(YOY_grwth_Middleton_scaled, k=4) +
+s(smr_adult_cond_scaled, k=4), data=scaled_gam_dat) #more coefficients than data
+gam.check(mod1_1) #not good
+summary(mod1_1)
 
-#drop lease nonlinear and try again
-mod_train1_2 <- gam(ln_rec ~ s(Spr_ST_SEBS_scaled, k=4)  +      
-                      #Smr_temp_250m_GOA_scaled  +      
-                      #Spr_chlA_biom_SEBS_scaled  +     
-                      #Spr_chlA_peak_GOA_scaled  +     
-                      #Spr_chlA_peak_SEBS_scaled  +  
-                      #ann_Copepod_size_WGOA_scaled +     
-                      s(ann_Copepod_size_EGOA_scaled, k=4)  +     
-                      s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
-                      s(Smr_condition_fem_age4_GOA_scaled, k=4) +
-                      smr_adult_cond_scaled, data=train1_gam_dat)
-gam.check(mod_train1_2) #not good
-summary(mod_train1_2)
+#next shortest are chl covars try dropping
+mod1_2 <- gam(ln_rec ~ s(Spr_ST_SEBS_scaled, k=4)  +      
+                # s(Smr_temp_250m_GOA_scaled, k=4)  +  #too short    
+               # s(Spr_chlA_biom_GOA_scaled, k=4)  + 
+               # s(Spr_chlA_biom_SEBS_scaled, k=4)  +     
+               # s(Spr_chlA_peak_GOA_scaled, k=4)  +     
+              #  s(Spr_chlA_peak_SEBS_scaled, k=4)  +  
+                s(ann_Copepod_size_EGOA_scaled, k=4)  +     
+                s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
+                s(YOY_grwth_Middleton_scaled, k=4) +
+                s(smr_adult_cond_scaled, k=4), data=scaled_gam_dat) #runs once all chl covars removed
+gam.check(mod1_2) #not good
+summary(mod1_2) #nothing significantly nonlinear, only YOY_grwth has edf over 1
 
-mod_train1_3 <- gam(ln_rec ~ s(Spr_ST_SEBS_scaled, k=4)  +      
-                      #Smr_temp_250m_GOA_scaled  +      
-                      #Spr_chlA_biom_SEBS_scaled  +     
-                      #Spr_chlA_peak_GOA_scaled  +     
-                      #Spr_chlA_peak_SEBS_scaled  +  
-                      #ann_Copepod_size_WGOA_scaled +     
-                      s(ann_Copepod_size_EGOA_scaled, k=4)  +     
-                      s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
-                      Smr_condition_fem_age4_GOA_scaled +
-                      smr_adult_cond_scaled, data=train1_gam_dat)
-gam.check(mod_train1_3) #not good
-summary(mod_train1_3)
-
-mod_train1_3 <- gam(ln_rec ~ Spr_ST_SEBS_scaled  +      
-                      #Smr_temp_250m_GOA_scaled  +      
-                      #Spr_chlA_biom_SEBS_scaled  +     
-                      #Spr_chlA_peak_GOA_scaled  +     
-                      #Spr_chlA_peak_SEBS_scaled  +  
-                      #ann_Copepod_size_WGOA_scaled +     
-                      s(ann_Copepod_size_EGOA_scaled, k=4)  +     
-                      s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
-                      Smr_condition_fem_age4_GOA_scaled +
-                      smr_adult_cond_scaled, data=train1_gam_dat)
-gam.check(mod_train1_3) #not good
-summary(mod_train1_3)
+#change all edf < 2 to linear and try again
+mod1_3 <- gam(ln_rec ~ Spr_ST_SEBS_scaled  +      
+                # s(Smr_temp_250m_GOA_scaled, k=4)  +  #too short    
+                # s(Spr_chlA_biom_GOA_scaled, k=4)  + 
+                # s(Spr_chlA_biom_SEBS_scaled, k=4)  +     
+                # s(Spr_chlA_peak_GOA_scaled, k=4)  +     
+                #  s(Spr_chlA_peak_SEBS_scaled, k=4)  +  
+                ann_Copepod_size_EGOA_scaled  +     
+                Smr_CPUE_juv_ADFG_ln_scaled +    
+                s(YOY_grwth_Middleton_scaled, k=4) +
+                smr_adult_cond_scaled, data=scaled_gam_dat) #runs once all chl covars removed
+gam.check(mod1_3) #not good
+summary(mod1_3) #none are significantly nonlinear
 
 
-mod_train1_4 <- gam(ln_rec ~ Spr_ST_SEBS_scaled  +      
-                      #Smr_temp_250m_GOA_scaled  +      
-                      #Spr_chlA_biom_SEBS_scaled  +     
-                      #Spr_chlA_peak_GOA_scaled  +     
-                      #Spr_chlA_peak_SEBS_scaled  +  
-                      #ann_Copepod_size_WGOA_scaled +     
-                      ann_Copepod_size_EGOA_scaled  +     
-                      s(Smr_CPUE_juv_ADFG_ln_scaled, k=4 ) +    
-                      Smr_condition_fem_age4_GOA_scaled +
-                      smr_adult_cond_scaled, data=train1_gam_dat)
-gam.check(mod_train1_4) #not good
-summary(mod_train1_4)
+mod1_4 <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +      
+                ann_Copepod_size_EGOA_scaled  +     
+                Smr_CPUE_juv_ADFG_ln_scaled +    
+                YOY_grwth_Middleton_scaled +
+                smr_adult_cond_scaled, data=scaled_gam_dat) #
+summary(mod1_4)
+anova(mod1_4)
 
-#None are nonlinear!
-
-#add back in the covars I removed, limit k since still too few data
-mod_train1_5 <- gam(ln_rec ~ Spr_ST_SEBS_scaled  +      
-                    #  s(Smr_temp_250m_GOA_scaled, k=3)  +      
-                      s(Spr_chlA_biom_SEBS_scaled, k=3)  +     
-                      s(Spr_chlA_peak_GOA_scaled, k=3)  +     
-                      s(Spr_chlA_peak_SEBS_scaled, k=3)  +  
-                      s(ann_Copepod_size_WGOA_scaled, k=3) +     
-                      ann_Copepod_size_EGOA_scaled  +     
-                      Smr_CPUE_juv_ADFG_ln_scaled +    
-                      Smr_condition_fem_age4_GOA_scaled +
-                      smr_adult_cond_scaled, data=train1_gam_dat)
-gam.check(mod_train1_5) #not good
-summary(mod_train1_5)
-
-#all linear? Try and then look at resids and only try covars that look nonlin as nonlinear
-mod_trainlin <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +      
-                      #Smr_temp_250m_GOA_scaled +       
-                     Spr_chlA_biom_GOA_scaled  +     
-                      Spr_chlA_biom_SEBS_scaled  +     
-                      Spr_chlA_peak_GOA_scaled  +     
-                      Spr_chlA_peak_SEBS_scaled  +  
-                      YOY_grwth_Middleton_scaled +     
-                      ann_Copepod_size_EGOA_scaled  +     
-                      Smr_CPUE_juv_ADFG_ln_scaled +    
-                      smr_adult_cond_scaled, data=train1_gam_dat)
-summary(mod_trainlin)
-
-mod_trainlin2 <- gam(ln_rec ~ s(Spr_ST_SEBS_scaled, k=4)  +      
-                     #Smr_temp_250m_GOA_scaled +       
-                     Spr_chlA_biom_GOA_scaled  +     
-                     Spr_chlA_biom_SEBS_scaled  +     
-                     Spr_chlA_peak_GOA_scaled  +     
-                     Spr_chlA_peak_SEBS_scaled  +  
-                     YOY_grwth_Middleton_scaled +     
-                     ann_Copepod_size_EGOA_scaled  +     
-                     Smr_CPUE_juv_ADFG_ln_scaled +    
-                     smr_adult_cond_scaled, data=train1_gam_dat)
-summary(mod_trainlin2)
+#only ADFG survey is significant!
 
 
-mod_trainlin3 <- gam(ln_rec ~ Spr_ST_SEBS_scaled  +      
-                       #Smr_temp_250m_GOA_scaled +       
-                       Spr_chlA_biom_GOA_scaled  +     
-                       Spr_chlA_biom_SEBS_scaled  +     
-                       Spr_chlA_peak_GOA_scaled  +     
-                       Spr_chlA_peak_SEBS_scaled  +  
-                       YOY_grwth_Middleton_scaled +     
-                       ann_Copepod_size_EGOA_scaled  +     
-                       s(Smr_CPUE_juv_ADFG_ln_scaled, k=4) +    
-                       smr_adult_cond_scaled, data=train1_gam_dat)
-summary(mod_trainlin3)
+#run on ONLY 4 longest time series
 
-#drop all satelitte covars, they are quite short
-mod_trainshort <- gam(ln_rec ~ s(Spr_ST_SEBS_scaled, k=4)  +      
-                       #Smr_temp_250m_GOA_scaled +       
-                       #Spr_chlA_biom_GOA_scaled  +     
-                       #Spr_chlA_biom_SEBS_scaled  +     
-                       #Spr_chlA_peak_GOA_scaled  +     
-                       #Spr_chlA_peak_SEBS_scaled  +  
-                       YOY_grwth_Middleton_scaled +     
-                       #ann_Copepod_size_EGOA_scaled  +     
-                       s(Smr_CPUE_juv_ADFG_ln_scaled, k=4) +    
-                       smr_adult_cond_scaled, data=train1_gam_dat)
-summary(mod_trainshort)
-
-mod_trainshort1 <- gam(ln_rec ~ Spr_ST_SEBS_scaled  +      
-                        #Smr_temp_250m_GOA_scaled +       
-                        #Spr_chlA_biom_GOA_scaled  +     
-                        #Spr_chlA_biom_SEBS_scaled  +     
-                        #Spr_chlA_peak_GOA_scaled  +     
-                        #Spr_chlA_peak_SEBS_scaled  +  
-                        YOY_grwth_Middleton_scaled +     
-                        #ann_Copepod_size_EGOA_scaled  +     
-                        s(Smr_CPUE_juv_ADFG_ln_scaled, k=4) +    
-                        smr_adult_cond_scaled, data=train1_gam_dat)
-summary(mod_trainshort1)
-
-mod_trainshort2 <- gam(ln_rec ~ Spr_ST_SEBS_scaled  +      
-                        #Smr_temp_250m_GOA_scaled +       
-                        #Spr_chlA_biom_GOA_scaled  +     
-                        #Spr_chlA_biom_SEBS_scaled  +     
-                        #Spr_chlA_peak_GOA_scaled  +     
-                        #Spr_chlA_peak_SEBS_scaled  +  
-                        YOY_grwth_Middleton_scaled +     
-                        #ann_Copepod_size_EGOA_scaled  +     
-                        s(Smr_CPUE_juv_ADFG_ln_scaled, k=4), data=train1_gam_dat)
-summary(mod_trainshort2)
-plot(mod_trainshort2)
-
-library(gratia)
-draw(mod_trainshort2) + theme_bw()
-
-library(itsadug)
-plot_smooth(mod_trainshort2, view="Smr_CPUE_juv_ADFG_ln_scaled", ylab="ln(Recruitment)",
-            xlab="Summer juvenile CPUE ADFG survey")
-
-#OLD===============================================================================================
-
-#gamms==============
-
-
-mod1 <- gam(recruit_scaled ~ s(Spr_ST_SEBS_scaled, k=4) +
-               s(ann_Copepod_size_EGOA_scaled, k=4) +
-               s(Smr_CPUE_juv_ADFG_scaled, k=4) +
-               s(spawner_age_evenness_scaled, k=4) +
-               s(smr_adult_cond_scaled, k=4),
-               data=scaled_dat)
-gam.check(mod1) #NOT GOOD
-summary(mod1)
-plot(mod1)
-
-#reduce to only sig nonlinear
-
-mod2 <- gam(recruit_scaled ~ s(Spr_ST_SEBS_scaled, k=4) +
-              ann_Copepod_size_EGOA_scaled +
-              Smr_CPUE_juv_ADFG_scaled +
-              s(spawner_age_evenness_scaled, k=4) +
-              smr_adult_cond_scaled,
-            data=scaled_dat)
-gam.check(mod2) #NOT GOOD
-summary(mod2)
-plot(mod2)
-
-#what about linear?
-
-modL <- glm(recruit_scaled ~ Spr_ST_SEBS_scaled +
-      ann_Copepod_size_EGOA_scaled +
-      Smr_CPUE_juv_ADFG_scaled +
-      spawner_age_evenness_scaled +
-      smr_adult_cond_scaled,
-    data=scaled_dat)
-summary(modL)
-
-library(lsr)
-etaSquared(modL, type=2, anova=TRUE)
+mod1_5 <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +        
+               Smr_CPUE_juv_ADFG_ln_scaled +    
+               YOY_grwth_Middleton_scaled +
+               smr_adult_cond_scaled, data=scaled_gam_dat) #
+summary(mod1_5)
+anova(mod1_5) #still only ADFG
 
 
 
-#Repeat WITH ALL covars------
-#even those that have high correlations
-#danger!
-
-#OK with all covars has more coefficients than data
-
-all1 <- gam(recruit_scaled ~ s(Spr_ST_SEBS_scaled, k=4) +
-              s(ann_Copepod_size_EGOA_scaled, k=4) +
-              s(Smr_CPUE_juv_ADFG_scaled, k=4) +
-              s(spawner_mean_age_scaled, k=4) +
-              s(spawner_age_evenness_scaled, k=4) +
-             # s(arrowtooth_biomass_scaled, k=4) +
-              s(sablefish_bycatch_arrowtooth_fishery_scaled, k=4) +
-              s(smr_adult_cond_scaled, k=4),
-            data=scaled_dat)
-gam.check(all1) #NOT GOOD
-summary(all1)
-plot(all1)
-
-#reduce to only sig nonlinear
-
-all2 <- gam(recruit_scaled ~ s(Spr_ST_SEBS_scaled, k=4) +
-              s(ann_Copepod_size_EGOA_scaled, k=4) +
-              Smr_CPUE_juv_ADFG_scaled +
-              spawner_mean_age_scaled +
-              s(spawner_age_evenness_scaled, k=4) +
-              # s(arrowtooth_biomass_scaled, k=4) +
-              s(sablefish_bycatch_arrowtooth_fishery_scaled, k=4) +
-              smr_adult_cond_scaled,
-            data=scaled_dat)
-gam.check(all2) #NOT GOOD
-summary(all2)
-plot(all2)
-
-#some no longer significantly nonlinear reduce again
-
-all3 <- gam(recruit_scaled ~ Spr_ST_SEBS_scaled +
-              ann_Copepod_size_EGOA_scaled +
-              Smr_CPUE_juv_ADFG_scaled +
-              spawner_mean_age_scaled +
-              spawner_age_evenness_scaled +
-              # s(arrowtooth_biomass_scaled, k=4) +
-              s(sablefish_bycatch_arrowtooth_fishery_scaled, k=4) +
-              smr_adult_cond_scaled,
-            data=scaled_dat)
-gam.check(all3) #less awful
-summary(all3)
-plot(all3)
-
-#what about linear?
-
-allL <- glm(recruit_scaled ~ Spr_ST_SEBS_scaled +
-              ann_Copepod_size_EGOA_scaled +
-              Smr_CPUE_juv_ADFG_scaled +
-              #spawner_mean_age_scaled +    #removed b/c too few df
-              spawner_age_evenness_scaled +
-              sablefish_bycatch_arrowtooth_fishery_scaled +
-              smr_adult_cond_scaled,
-            data=scaled_dat)
-summary(allL)
-
-
-etaSquared(allL, type=2, anova=TRUE)
-
-AIC(allL, all1, all2, all3)
-
-#interactions???
-int1 <- glm(recruit_scaled ~ Spr_ST_SEBS_scaled*YOY_grwth_Middleton_scaled +
-              Spr_ST_SEBS_scaled*smr_adult_cond_scaled +
-              Spr_ST_SEBS_scaled*Smr_CPUE_juv_ADFG_scaled +
-              #spawner_mean_age_scaled +    #removed b/c too few df
-              spawner_age_evenness_scaled +
-              sablefish_bycatch_arrowtooth_fishery_scaled,
-            data=scaled_dat)
-summary(int1)
-
-
-ggplot(scaled_dat, aes(Smr_CPUE_juv_ADFG_scaled, recruit_scaled,  col=Spr_ST_SEBS_scaled))+
-  geom_point()
-
-ggplot(scaled_dat, aes(Year, Smr_CPUE_juv_ADFG_scaled, col=Spr_ST_SEBS_scaled))+
-  geom_point()
 
 
