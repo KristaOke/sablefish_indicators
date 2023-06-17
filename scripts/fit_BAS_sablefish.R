@@ -275,8 +275,8 @@ g2
 # Bring Figs Together ========
 g3 <- plot_grid(g,g2, nrow=1, ncol=2, rel_widths=c(3,1), align='h')
 g3 #+ ggtitle('Sablefish Recruitment', subtitle=paste('Rsq:',round(,2)))
-ggsave(file=file.path(dir.figs,"BAS.png"), plot=g3, height=5, width=8, units='in',
-       dpi=500)
+# ggsave(file=file.path(dir.figs,"BAS.png"), plot=g3, height=5, width=8, units='in',
+#        dpi=500)
 
 
 #PLOT OUTPUT WITHOUT RAINBOW ===========
@@ -315,8 +315,8 @@ g2.b
 # Bring Figs Together ========
 g3.b <- plot_grid(g.b,g2.b, nrow=1, ncol=2, rel_widths=c(3,1), align='h')
 g3.b #+ ggtitle('Sablefish Recruitment', subtitle=paste('Rsq:',round(,2)))
-ggsave(file=file.path(dir.figs,"BAS_noRainbow.png"), plot=g3.b, height=5, width=8, units='in',
-       dpi=500)
+# ggsave(file=file.path(dir.figs,"BAS_noRainbow.png"), plot=g3.b, height=5, width=8, units='in',
+#        dpi=500)
 
 #REPEAT without short time series================================================================
 
