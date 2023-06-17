@@ -186,7 +186,11 @@ mod1_5 <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +
                YOY_grwth_Middleton_scaled +
                smr_adult_cond_scaled, data=scaled_gam_dat) #
 summary(mod1_5)
-anova(mod1_5) #still only ADFG
+anova(mod1_5) #still only ADFG significant
+
+plot(mod1_5)
+ggplot(scaled_gam_dat, aes(Smr_CPUE_juv_ADFG_ln_scaled, ln_rec)) + geom_point() +
+  geom_smooth(method="lm")
 
 
 
