@@ -222,7 +222,7 @@ model.data = data.frame()
 for(R in levels.R) {
   for(m in 1:6) {  # allowing up to 3 trends
     dfa.model = list(A="zero", R=R, m=m)
-    kemz = MARSS(z.mat1, model=dfa.model, control=cntl.list,
+    kemz = MARSS(z.mat1, model=dfa.model, #control=cntl.listB,
                  form="dfa", z.score=FALSE, method="BFGS")
     model.data = rbind(model.data,
                        data.frame(R=R,
@@ -254,7 +254,7 @@ write_csv(model.dataB, file = paste(wd,"/scripts/model_comparison_DFA_wholedatas
 
 model.list.1 = list(A="zero", m=1, R="diagonal and unequal") # best model by a little
 cntl.list1 = list(minit=200, maxit=40000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
-model.1 = MARSS(z.mat1, model=model.list.1, z.score=TRUE, form="dfa", control=cntl.list1)
+model.1 = MARSS(z.mat1, model=model.list.1, z.score=FALSE, form="dfa", control=cntl.list1)
 #
 autoplot(model.1)
 
@@ -458,7 +458,7 @@ ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 # now fit second best model
 
 model.list.2 = list(A="zero", m=2, R="diagonal and unequal") # second best model
-model.2 = MARSS(z.mat1, model=model.list.2, z.score=TRUE, form="dfa", control=cntl.list2)
+model.2 = MARSS(z.mat1, model=model.list.2, z.score=FALSE, form="dfa", control=cntl.list2)
 #
 cntl.list2 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
@@ -652,7 +652,7 @@ for (i in 1:N_ts) {
 # now fit best model
 
 model.list.3 = list(A="zero", m=1, R="equalvarcov") # 
-model.3 = MARSS(z.mat1, model=model.list.3, z.score=TRUE, form="dfa", control=cntl.list)
+model.3 = MARSS(z.mat1, model=model.list.3, z.score=FALSE, form="dfa", control=cntl.list)
 #DOES NOT CONVERGE bump up to 60K iter
 cntl.list3 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
@@ -774,7 +774,7 @@ ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 # fitting first model with 3 trends (7th best)
 
 model.list.4 = list(A="zero", m=3, R="diagonal and unequal") # 
-model.4 = MARSS(z.mat1, model=model.list.4, z.score=TRUE, form="dfa", control=cntl.list4)
+model.4 = MARSS(z.mat1, model=model.list.4, z.score=TRUE, form="dfa", method="BFGS")
 #SEVERAL PARAMETERS DO NOT CONVERGE
 cntl.list4 = list(minit=200, maxit=300000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
@@ -790,10 +790,10 @@ proc_rot = solve(H_inv) %*% model.4$states #doesn't work
 # reverse trend 2 to plot
 Z.rot[,2] <- -Z.rot[,2]
 
-Z.rot$names <- rownames(z.ind.mat)
+Z.rot$names <- rownames(z.mat1)
 Z.rot <- arrange(Z.rot, V1)
 Z.rot <- gather(Z.rot[,c(1,2)])
-Z.rot$names <- rownames(z.ind.mat)
+Z.rot$names <- rownames(z.mat1)
 #Z.rot$plot.names <- reorder(Z.rot$names, 1:14)
 
 
@@ -819,9 +819,9 @@ rec.plot <- ggplot(Z.rot, aes(names, value, fill=key)) + geom_bar(stat="identity
 yr_frst <- 1977
 
 ## get number of time series
-N_ts <- dim(z.ind.mat)[1]
+N_ts <- dim(z.mat1)[1]
 ## get length of time series
-TT <- dim(z.ind.mat)[2]
+TT <- dim(z.mat1)[2]
 
 ## get the estimated ZZ
 Z_est <- coef(model.4, type = "matrix")$Z
@@ -833,11 +833,11 @@ Z_rot = Z_est %*% H_inv
 ## rotate processes
 proc_rot = solve(H_inv) %*% model.4$states
 
-mm <- 1 #processes
+mm <- 3 #processes
 
-rec_names <- rownames(z.ind.mat)
+rec_names <- rownames(z.mat1)
 ylbl <- rec_names
-w_ts <- seq(dim(z.ind.mat)[2])
+w_ts <- seq(dim(z.mat1)[2])
 layout(matrix(c(1, 2), mm, 2), widths = c(2, 1))
 ## par(mfcol=c(mm,2), mai=c(0.5,0.5,0.5,0.1), omi=c(0,0,0,0))
 # jpeg("figs/ugly_DFA_trends_loadings.jpg")
@@ -857,7 +857,7 @@ for (i in 1:mm) {
   ## add panel labels
   mtext(paste("State", i), side = 3, line = 0.5)
   #axis(1, 12 * (0:dim(all.clim.dat)[2]) + 1, yr_frst + 0:dim(all.clim.dat)[2])
-  axis(1, 1:47, yr_frst + 0:dim(z.ind.mat)[2])
+  axis(1, 1:47, yr_frst + 0:dim(z.mat1)[2])
 }
 ## plot the loadings
 clr <- c("brown", 
