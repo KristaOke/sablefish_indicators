@@ -519,5 +519,49 @@ g3.b #+ ggtitle('Sablefish Recruitment', subtitle=paste('Rsq:',round(,2)))
 
 
 
+#LOOCV============================================================================
+
+#LOOCV on only long time series-------
+
+
+
+covars <- names(scaled_bas_dat)[which(names(scaled_bas_dat) %in% c("Year", "ln_rec",
+                                                                   "Spr_ST_SEBS_scaled",
+                                                                   "smr_adult_cond_scaled",
+                                                                   "YOY_grwth_Middleton_scaled",
+                                                                   "Smr_CPUE_juv_ADFG_ln_scaled"))]
+
+n.cov <- length(covars)
+
+#STEP 1 - Loop through training sets and fit models-------
+
+yrs <- unique(scaled_loop_dat$Year)
+output_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
+colnames(output_df) <- c("Year", "observed_ln_recruit", "predicted_ln_recruit")
+
+i<-1
+for(i in 1:length(scaled_loop_dat$Year)){
+  print(i)
+  temp_dat <- scaled_loop_dat[-i,]
+  
+  temp_dat <- temp_dat[-which(names(temp_dat) %in% c("Year"))]
+  temp_dat <- temp_dat[which(names(temp_dat) %in% covars)]
+  
+  dropped_yr <- scaled_loop_dat[i,]
+  dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
+  #fit model
+  bas.loop <-  bas.lm(ln_rec ~ ., data=temp_dat,
+                    # prior="ZS-null",
+                    modelprior=uniform(), initprobs="Uniform",
+                    method='BAS', MCMC.iterations=1e5, thin=10)
+  
+  #have model predict to missing year
+  temp_predict <- predict(bas.loop, estimator="BMA")
+  #write to output object so we can compare predicted vs obs
+  output_df$Year[i] <- dropped_yr$Year
+  output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  output_df$predicted_ln_recruit[i] <- temp_predict
+}
+
 
 
