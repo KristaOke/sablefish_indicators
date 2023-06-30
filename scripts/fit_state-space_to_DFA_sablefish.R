@@ -16,3 +16,13 @@ dir.figs <- file.path(wd,"figs")
 
 #Get data =======
 
+trends_rec_dat <- read.csv(file = paste(wd,"/data/DFA_trends_recruit_data.csv", sep=""))
+
+#=============================================================
+
+
+
+
+
+
+
