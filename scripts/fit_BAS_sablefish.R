@@ -535,6 +535,9 @@ n.cov <- length(covars)
 
 #STEP 1 - Loop through training sets and fit models-------
 
+#I am using HPM or highest probability model rather than model averaging which produces a 
+#range of predictions, should revisit
+
 yrs <- unique(scaled_loop_dat$Year)
 output_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
 colnames(output_df) <- c("Year", "observed_ln_recruit", "predicted_ln_recruit")
@@ -548,6 +551,8 @@ for(i in 1:length(scaled_loop_dat$Year)){
   temp_dat <- temp_dat[which(names(temp_dat) %in% covars)]
   
   dropped_yr <- scaled_loop_dat[i,]
+  output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  dropped_yr <- dropped_yr[,names(dropped_yr) %in% covars]
   dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
   #fit model
   bas.loop <-  bas.lm(ln_rec ~ ., data=temp_dat,
@@ -556,12 +561,14 @@ for(i in 1:length(scaled_loop_dat$Year)){
                     method='BAS', MCMC.iterations=1e5, thin=10)
   
   #have model predict to missing year
-  temp_predict <- predict(bas.loop, estimator="BMA")
+  temp_predict <- predict(bas.loop, newdata=dropped_yr, estimator="HPM")
   #write to output object so we can compare predicted vs obs
   output_df$Year[i] <- dropped_yr$Year
-  output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
-  output_df$predicted_ln_recruit[i] <- temp_predict
+  output_df$predicted_ln_recruit[i] <- temp_predict$Ypred
 }
 
+output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
 
+ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  geom_point() + geom_smooth(method="lm")
 
