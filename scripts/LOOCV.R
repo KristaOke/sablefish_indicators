@@ -41,12 +41,22 @@ scaled_loop_dat <- scaled[,names(scaled) %in% noncor_covars3]
 #STEP 1 - Loop through training sets and fit models-------
 
 yrs <- unique(scaled_loop_dat$Year)
+output_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
+colnames(output_df) <- c("Year", "observed_ln_recruit", "predicted_ln_recruit")
 
 i<-1
 for(i in 1:length(scaled_loop_dat$Year)){
   print(i)
   temp_dat <- scaled_loop_dat[-i,]
+  dropped_yr <- scaled_loop_dat[i,]
+  dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
   #fit model
+  #have model predict to missing year
+ # temp_predict <- predict()
+  #write to output object so we can compare predicted vs obs
+  output_df$Year[i] <- dropped_yr$Year
+  output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  output_df$predicted_ln_recruit[i] <- temp_predict
 }
 
 #STEP 2 - get MSE, MAE, and R2------
