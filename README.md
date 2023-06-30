@@ -6,4 +6,5 @@ Main project collaborators:
 Krista Oke, NRC/NOAA postdoc, contact with questions: krista.oke@noaa.gov
 Kalei Shotwell, NOAA
 Ebett Siddon, NOAA
+Curry Cunningham, UAF
 
