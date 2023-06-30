@@ -927,3 +927,26 @@ anova(quickmod2_adfg)
 ggplot(model2_reg_dat, aes(Smr_CPUE_juv_ADFG_ln_scaled, ln_rec)) + geom_point() + geom_smooth()
 
 ggplot(model2_reg_dat, aes(sablefish_bycatch_arrowtooth_fishery_scaled, ln_rec)) + geom_point() + geom_smooth()
+
+
+#join trends from diff models and save for state space====
+
+
+names(model.1_trends)
+names(model.2_trends)
+
+join1 <- model.1_trends
+join2 <- model.2_trends
+
+colnames(join1) <- c("Year", "model1_state1", "model1_state1_SE")
+colnames(join2) <- c("Year", "model2_state1", "model2_state2", 
+                     "model2_state1_SE", "model2_state2_SE")
+
+trends_join <- left_join(join1, join2)
+
+trends_join$Year <- as.integer(trends_join$Year)
+
+trends_rec_dat <- left_join(trends_join, scaled[,names(scaled) %in% c("ln_rec", "Year")])
+
+write_csv(trends_rec_dat, file = paste(wd,"/data/DFA_trends_recruit_data.csv", sep=""))
+
