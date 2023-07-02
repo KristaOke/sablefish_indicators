@@ -59,6 +59,12 @@ for(i in 1:length(scaled_loop_dat$Year)){
   output_df$predicted_ln_recruit[i] <- temp_predict
 }
 
+
+output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
+
+ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  geom_point() + geom_smooth(method="lm")
+
 #STEP 2 - get MSE, MAE, and R2------
 
 #get MSE & MAE------
