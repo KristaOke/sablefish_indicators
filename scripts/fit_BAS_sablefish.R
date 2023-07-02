@@ -538,6 +538,8 @@ n.cov <- length(covars)
 #I am using HPM or highest probability model rather than model averaging which produces a 
 #range of predictions, should revisit
 
+scaled_loop_dat <- scaled_bas_dat
+
 yrs <- unique(scaled_loop_dat$Year)
 output_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
 colnames(output_df) <- c("Year", "observed_ln_recruit", "predicted_ln_recruit")
