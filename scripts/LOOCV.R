@@ -70,9 +70,9 @@ ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) +
 #get MSE & MAE------
 
 #these need to be double checked!
-BAS <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
 
-BAS <- ((sum((abs(output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2), na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+MAE <- ((sum((abs(output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2), na.rm = TRUE)))/length(output_df$observed_ln_recruit)
 
 obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
 summary(obs_pred_mod)
