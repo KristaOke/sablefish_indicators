@@ -562,13 +562,36 @@ for(i in 1:length(scaled_loop_dat$Year)){
   
   #have model predict to missing year
   temp_predict <- predict(bas.loop, newdata=dropped_yr, estimator="HPM")
+  print(temp_predict$bestmodel)
   #write to output object so we can compare predicted vs obs
   output_df$Year[i] <- dropped_yr$Year
   output_df$predicted_ln_recruit[i] <- temp_predict$Ypred
 }
 
+#PROBLEM! Using HPM results in some loops selecting different best models!
+
+
 output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
 
 ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
   geom_point() + geom_smooth(method="lm")
+
+#get MSE & MAE------
+
+#these need to be double checked!
+BAS_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+
+BAS_MAE <- ((sum((abs(output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2), na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+
+obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
+summary(obs_pred_mod)
+
+
+
+
+
+
+
+
+
 
