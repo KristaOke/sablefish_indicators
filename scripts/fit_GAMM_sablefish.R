@@ -89,17 +89,6 @@ rec.plotn
 
 # load data that is already z-scored, checked for correlations
 
-train1 <- read.csv(file=paste(wd,"/data/dataset_training1.csv", sep=""), row.names = 1)
-train2 <- read.csv(file=paste(wd,"/data/dataset_training2.csv", sep=""), row.names = 1)
-train3 <- read.csv(file=paste(wd,"/data/dataset_training3.csv", sep=""), row.names = 1)
-train4 <- read.csv(file=paste(wd,"/data/dataset_training4.csv", sep=""), row.names = 1)
-train5 <- read.csv(file=paste(wd,"/data/dataset_training5.csv", sep=""), row.names = 1)
-
-testing1 <- read.csv(file=paste(wd,"/data/dataset_testing1.csv", sep=""), row.names = 1)
-testing2 <- read.csv(file=paste(wd,"/data/dataset_testing2.csv", sep=""), row.names = 1)
-testing3 <- read.csv(file=paste(wd,"/data/dataset_testing3.csv", sep=""), row.names = 1)
-testing4 <- read.csv(file=paste(wd,"/data/dataset_testing4.csv", sep=""), row.names = 1)
-testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.names = 1)
 
 #DATA CONTROL SECTION----
 
@@ -110,12 +99,6 @@ testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.na
 
 #GAM cannot handle missing data, euphasiid and the every other yr GOA indicator were already removed
 
-
-train1_gam_dat <- train1[,names(train1) %in% noncor_covars3]
-train2_gam_dat <- train2[,names(train2) %in% noncor_covars3]
-train3_gam_dat <- train3[,names(train3) %in% noncor_covars3]
-train4_gam_dat <- train4[,names(train4) %in% noncor_covars3]
-train5_gam_dat <- train5[,names(train5) %in% noncor_covars3]
 
 scaled_gam_dat <- scaled_dat[,names(scaled_dat) %in% noncor_covars3]
 
@@ -191,6 +174,109 @@ anova(mod1_5) #still only ADFG significant
 plot(mod1_5)
 ggplot(scaled_gam_dat, aes(Smr_CPUE_juv_ADFG_ln_scaled, ln_rec)) + geom_point() +
   geom_smooth(method="lm")
+
+
+#LOOCV - all time series=======
+
+#STEP 1 - Loop through training sets and fit models-------
+
+#ONLY 4 longest time series
+scaled_loop_dat <- scaled_gam_dat
+
+yrs <- unique(scaled_loop_dat$Year)
+output_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
+colnames(output_df) <- c("Year", "observed_ln_recruit", "predicted_ln_recruit")
+
+i<-1
+for(i in 1:length(scaled_loop_dat$Year)){
+  print(i)
+  temp_dat <- scaled_loop_dat[-i,]
+  dropped_yr <- scaled_loop_dat[i,]
+  output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
+  #fit model
+  modtemp <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +      
+                  ann_Copepod_size_EGOA_scaled  +     
+                  Smr_CPUE_juv_ADFG_ln_scaled +    
+                  YOY_grwth_Middleton_scaled +
+                  smr_adult_cond_scaled, data=temp_dat)
+  #have model predict to missing year
+   temp_predict <- predict(modtemp, newdata=dropped_yr)
+  #write to output object so we can compare predicted vs obs
+  output_df$Year[i] <- dropped_yr$Year
+  output_df$predicted_ln_recruit[i] <- temp_predict[1]
+}
+
+
+output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
+
+ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))
+
+#STEP 2 - get MSE, MAE, and R2------
+
+#get MSE & MAE------
+
+#these need to be double checked!
+GAM_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+
+GAM_MAE <- ((sum((abs(output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2), na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+
+obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
+summary(obs_pred_mod)
+
+
+
+
+#LOOCV - long time series=======
+
+#STEP 1 - Loop through training sets and fit models-------
+
+#
+scaled_loop_dat <- scaled_gam_dat
+
+yrs <- unique(scaled_loop_dat$Year)
+output_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
+colnames(output_df) <- c("Year", "observed_ln_recruit", "predicted_ln_recruit")
+
+i<-1
+for(i in 1:length(scaled_loop_dat$Year)){
+  print(i)
+  temp_dat <- scaled_loop_dat[-i,]
+  dropped_yr <- scaled_loop_dat[i,]
+  output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
+  #fit model
+  modtemp <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +        
+                  Smr_CPUE_juv_ADFG_ln_scaled +    
+                  YOY_grwth_Middleton_scaled +
+                  smr_adult_cond_scaled, data=temp_dat)
+  #have model predict to missing year
+  temp_predict <- predict(modtemp, newdata=dropped_yr)
+  #write to output object so we can compare predicted vs obs
+  output_df$Year[i] <- dropped_yr$Year
+  output_df$predicted_ln_recruit[i] <- temp_predict[1]
+}
+
+
+output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
+
+ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))
+
+#STEP 2 - get MSE, MAE, and R2------
+
+#get MSE & MAE------
+
+#these need to be double checked!
+GAM_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+
+GAM_MAE <- ((sum((abs(output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2), na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+
+obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
+summary(obs_pred_mod)
 
 
 
