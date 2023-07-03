@@ -556,6 +556,7 @@ for(i in 1:length(scaled_loop_dat$Year)){
   output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
   dropped_yr <- dropped_yr[,names(dropped_yr) %in% covars]
   dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
+  print(dropped_yr$Year)
   #fit model
   bas.loop <-  bas.lm(ln_rec ~ ., data=temp_dat,
                     # prior="ZS-null",
@@ -563,20 +564,20 @@ for(i in 1:length(scaled_loop_dat$Year)){
                     method='BAS', MCMC.iterations=1e5, thin=10)
   
   #have model predict to missing year
-  temp_predict <- predict(bas.loop, newdata=dropped_yr, estimator="HPM")
+  temp_predict <- predict(bas.loop, newdata=dropped_yr, estimator="BMA")
   print(temp_predict$bestmodel)
   #write to output object so we can compare predicted vs obs
   output_df$Year[i] <- dropped_yr$Year
-  output_df$predicted_ln_recruit[i] <- temp_predict$Ypred
+  output_df$predicted_ln_recruit[i] <- temp_predict$fit
 }
 
 #PROBLEM! Using HPM results in some loops selecting different best models!
-
+#going back to using BMA
 
 output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
 
 ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
-  geom_point() + geom_smooth(method="lm")
+  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1)
 
 #get MSE & MAE------
 
@@ -587,6 +588,86 @@ BAS_MAE <- ((sum((abs(output_df$observed_ln_recruit - output_df$predicted_ln_rec
 
 obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
 summary(obs_pred_mod)
+
+
+
+
+
+#LOOCV on short time series-------
+
+
+
+covars <- c("Year", "ln_rec",
+                    "Spr_ST_SEBS_scaled"  ,
+                    "Smr_temp_250m_GOA_scaled"  , 
+                    "Spr_chlA_biom_GOA_scaled"  , 
+                    "Spr_chlA_biom_SEBS_scaled"  ,  
+                    "Spr_chlA_peak_GOA_scaled" ,
+                    "Spr_chlA_peak_SEBS_scaled" ,
+                    "ann_Copepod_size_EGOA_scaled" ,
+                    "YOY_grwth_Middleton_scaled",
+                    "Smr_CPUE_juv_ADFG_ln_scaled"  ,      
+                    "smr_adult_cond_scaled")
+
+n.cov <- length(covars)
+
+#STEP 1 - Loop through training sets and fit models-------
+
+#I am using HPM or highest probability model rather than model averaging which produces a 
+#range of predictions, should revisit
+
+scaled_loop_dat <- scaled_bas_dat
+
+yrs <- unique(scaled_loop_dat$Year)
+output_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
+colnames(output_df) <- c("Year", "observed_ln_recruit", "predicted_ln_recruit")
+
+i<-1
+for(i in 1:length(scaled_loop_dat$Year)){
+  print(i)
+  temp_dat <- scaled_loop_dat[-i,]
+  
+  temp_dat <- temp_dat[-which(names(temp_dat) %in% c("Year"))]
+  temp_dat <- temp_dat[which(names(temp_dat) %in% covars)]
+  
+  dropped_yr <- scaled_loop_dat[i,]
+  output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  dropped_yr <- dropped_yr[,names(dropped_yr) %in% covars]
+  dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
+  print(dropped_yr$Year)
+  #fit model
+  bas.loop <-  bas.lm(ln_rec ~ ., data=temp_dat,
+                      # prior="ZS-null",
+                      modelprior=uniform(), initprobs="Uniform",
+                      method='BAS', MCMC.iterations=1e5, thin=10)
+  
+  #have model predict to missing year
+  temp_predict <- predict(bas.loop, newdata=dropped_yr, estimator="BMA")
+  print(temp_predict$bestmodel)
+  #write to output object so we can compare predicted vs obs
+  output_df$Year[i] <- dropped_yr$Year
+  output_df$predicted_ln_recruit[i] <- temp_predict$fit
+}
+
+#PROBLEM! Using HPM results in some loops selecting different best models!
+#going back to using BMA
+
+
+output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
+
+ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1)
+
+#get MSE & MAE------
+
+#these need to be double checked!
+BAS_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+
+BAS_MAE <- ((sum((abs(output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2), na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+
+obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
+summary(obs_pred_mod)
+
 
 
 
