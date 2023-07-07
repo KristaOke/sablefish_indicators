@@ -21,6 +21,7 @@ library(viridis)
 library(ggthemes)
 library(BAS)
 library(readxl)
+library(yardstick)
 
 
 #=============================================================
@@ -138,6 +139,7 @@ image(bas.lm, rotate=F)
 plot(bas.lm, which = 4, ask=FALSE, caption="", sub.caption="")
 plot(coef(bas.lm),  ask=FALSE)
 plot(bas.lm, which=4)
+summary(bas.lm)
 
 
 # Plot Model Predictions vs. Observed ==============================
@@ -578,19 +580,28 @@ output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln
 
 ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
   geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
-  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))+
+  ylim(c(0,5)) + xlim(c(0,5))
 
 #get MSE & MAE------
 
 #these need to be double checked!
-BAS_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+#BAS_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
 
-BAS_MAE <- ((sum((abs(output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2), na.rm = TRUE)))/length(output_df$observed_ln_recruit)
 
 obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
 summary(obs_pred_mod)
 
+output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
 
+ggplot(output_df, aes(Year, diff, col=as.numeric(Year))) + 
+   geom_point() + geom_smooth(method="lm")
+
+BAS_long_rmse <- rmse(output_df, truth=observed_ln_recruit, 
+                 estimate=predicted_ln_recruit, na.rm=TRUE)
+
+BAS_long_mae <- mae(output_df, truth=observed_ln_recruit, 
+               estimate=predicted_ln_recruit, na.rm=TRUE)
 
 
 
@@ -658,21 +669,23 @@ output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln
 
 ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
   geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
-  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))+
+  ylim(c(0,5)) + xlim(c(0,5))
 
 #get MSE & MAE------
+library(yardstick)
 
 #these need to be double checked!
-BAS_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
-
-BAS_MAE <- ((sum((abs(output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2), na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+#BAS_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
 
 obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
 summary(obs_pred_mod)
 
+BAS_rmse <- rmse(output_df, truth=observed_ln_recruit, 
+                 estimate=predicted_ln_recruit, na.rm=TRUE)
 
-
-
+BAS_mae <- mae(output_df, truth=observed_ln_recruit, 
+                estimate=predicted_ln_recruit, na.rm=TRUE)
 
 
 

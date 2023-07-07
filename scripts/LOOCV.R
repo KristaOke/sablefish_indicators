@@ -63,19 +63,31 @@ for(i in 1:length(scaled_loop_dat$Year)){
 output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
 
 ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
-  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1)
+  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1)+
+  ylim(c(0,5)) + xlim(c(0,5))
 
 #STEP 2 - get MSE, MAE, and R2------
 
 #get MSE & MAE------
+library(yardstick)
 
 #these need to be double checked!
-MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
-
-MAE <- ((sum((abs(output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2), na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+#MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
 
 obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
 summary(obs_pred_mod)
+
+output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
+
+ggplot(output_df, aes(Year, diff, col=as.numeric(Year))) + 
+  geom_point() + geom_smooth(method="lm")
+
+rmse <- rmse(output_df, truth=observed_ln_recruit, 
+                 estimate=predicted_ln_recruit, na.rm=TRUE)
+
+mae <- mae(output_df, truth=observed_ln_recruit, 
+               estimate=predicted_ln_recruit, na.rm=TRUE)
+
 
 
 

@@ -1,4 +1,11 @@
+#============================================================================================================================================
+# Boosted regression tree
 
+#Created by Krista, 2023
+#borrowing heavily from code written by Curry
+#============================================================================================================================================
+#Notes:
+#============================================================================================================================================
 
 require(tidyverse)
 require(ggthemes)
@@ -54,23 +61,6 @@ dir.figs <- file.path(wd,"figs")
 # brtdat <- brtdat[is.na(brtdat$recruit_scaled)==FALSE,] #remove NAs from residuals
 # 
 # 
-# #NEED TO SUBSET out a training dataset
-# datlen <- length(brtdat$recruit_scaled)
-# train <- brtdat[sample(nrow(brtdat),(round(datlen*0.8))),]
-# train <- train[order(row.names(train)),]
-# 
-# testing <- anti_join(brtdat, train)
-# 
-# #save this training set?
-# 
-# rownames(train) <- train[,1]
-# train <- train[,-1]
-# 
-# rownames(testing) <- testing[,1]
-# testing <- testing[,-1]
-
-
-#Combine matrices
 
 # Create Input Data Frame ==========================================
 #dat <- data.frame(cbind(t(input.rec),t(input.cov)))
@@ -763,7 +753,7 @@ whole2 <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
                       data = scaled_brt_dat,
                       family = "gaussian",                       
                       tree.complexity = 1, #b/c very small sample
-                      learning.rate = 0.0001, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
+                      learning.rate = 0.001, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
                       bag.fraction = 0.8,
                       n.minobsinnode=1,
                       n.folds = 5,
@@ -771,4 +761,114 @@ whole2 <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
 gbm.plot(whole2)
 gbm.plot.fits(whole2)
 summary(whole2)
+gbm.perf(whole2) #8028
+
+
+
+
+#simple model 4 longest covars=============
+
+res1 <- "ln_rec"
+
+fit.covars <- names(scaled_brt_dat[,!names(scaled_brt_dat) %in% c("Year", "ln_rec")]) 
+
+reduced.covars <- names(scaled_brt_dat[,names(scaled_brt_dat) %in% c("Smr_CPUE_juv_ADFG_ln_scaled", 
+                                                                     "Spr_ST_SEBS_scaled",
+                                                                     "YOY_grwth_Middleton_scaled",
+                                                                     "smr_adult_cond_scaled")])
+
+red.form.covars <- paste(reduced.covars, collapse=" + ")
+form2 <- paste(res1, "~",red.form.covars)
+
+
+refit.reduced <- gbm(formula(form2), data=scaled_brt_dat, distribution='gaussian', 
+                   n.trees=10000, interaction.depth=1, n.minobsinnode=1,
+                   bag.fraction = 0.5,
+                   shrinkage=0.001)
+gbm.perf(refit.reduced)
+gbm.plot(refit.reduced)
+gbm.plot.fits(refit.reduced)
+gbm.perspec(refit.reduced, x=1, y=8) #not working
+summary(refit.reduced)
+
+
+#playing with tuning options
+
+testtune <- gbm(formula(form2), data=scaled_brt_dat, #distribution='gaussian', 
+                     n.trees=10000, 
+                #interaction.depth=1, 
+                n.minobsinnode=3, #min number of observations at a terminal node
+                     bag.fraction = 0.8,
+                     shrinkage=0.001)
+summary(testtune)
+gbm.perf(testtune, method="OOB") #982
+gbm.perf(testtune, method="cv")
+gbm.plot(testtune)
+gbm.plot.fits(testtune)
+
+
+#LOOCV====
+
+scaled_loop_dat <- scaled_brt_dat
+
+
+#STEP 1 - Loop through training sets and fit models-------
+
+yrs <- unique(scaled_loop_dat$Year)
+output_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
+colnames(output_df) <- c("Year", "observed_ln_recruit", "predicted_ln_recruit")
+
+i<-1
+for(i in 1:length(scaled_loop_dat$Year)){
+  print(i)
+  temp_dat <- scaled_loop_dat[-i,]
+  dropped_yr <- scaled_loop_dat[i,]
+  output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
+  #fit model
+ temp_mod <- gbm(formula(form2), data=temp_dat, distribution='gaussian', 
+      n.trees=10000, interaction.depth=1, n.minobsinnode=1,
+      bag.fraction = 0.7,
+      shrinkage=0.001)
+  #have model predict to missing year
+ temp_predict <-  predict.gbm(temp_mod, dropped_yr)
+  #write to output object so we can compare predicted vs obs
+  output_df$Year[i] <- dropped_yr$Year
+  output_df$predicted_ln_recruit[i] <- temp_predict
+}
+
+
+output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
+
+ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1)+ 
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year)) +
+  ylim(c(0,5)) + xlim(c(0,5))
+
+#STEP 2 - get MSE, MAE, and R2------
+library(yardstick)
+#get MSE & MAE------
+
+#these need to be double checked!
+# BRT_MSE <- ((sum((output_df$observed_ln_recruit - output_df$predicted_ln_recruit)^2, na.rm = TRUE)))/length(output_df$observed_ln_recruit)
+# 
+
+obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df)
+summary(obs_pred_mod)
+
+BRT_rmse <- rmse(output_df, truth=observed_ln_recruit, 
+                 estimate=predicted_ln_recruit, na.rm=TRUE)
+
+BRT_mae <- mae(output_df, truth=observed_ln_recruit, 
+               estimate=predicted_ln_recruit, na.rm=TRUE)
+
+
+
+output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
+
+ggplot(output_df, aes(Year, diff, col=as.numeric(Year))) + 
+  geom_point() + geom_smooth(method="lm")
+
+
+
 
