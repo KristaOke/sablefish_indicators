@@ -32,6 +32,11 @@ trends_rec_dat <- read.csv(file = paste(wd,"/data/DFA_trends_recruit_data.csv", 
 # AND
 # ln_rec ~ model2_state1 + model2_state2
 
+#get recruitment uncertainty=========
+
+sablestd <- read.csv(file=paste(wd, "/data/pred_rec_std_aligned.csv", sep=""), header = TRUE)
+
+
 
 #=============================================================
 
