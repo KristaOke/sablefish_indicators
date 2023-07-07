@@ -35,7 +35,8 @@ trends_rec_dat <- read.csv(file = paste(wd,"/data/DFA_trends_recruit_data.csv", 
 #get recruitment uncertainty=========
 
 sablestd <- read.csv(file=paste(wd, "/data/pred_rec_std_aligned.csv", sep=""), header = TRUE)
-
+#this is NOT LOGGED it is in millions of fish
+#I will let you log it
 
 
 #=============================================================
