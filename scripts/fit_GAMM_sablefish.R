@@ -175,6 +175,19 @@ plot(mod1_5)
 ggplot(scaled_gam_dat, aes(Smr_CPUE_juv_ADFG_ln_scaled, ln_rec)) + geom_point() +
   geom_smooth(method="lm")
 
+modAL <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +      
+                  Smr_temp_250m_GOA_scaled +  #    
+                  Spr_chlA_biom_GOA_scaled  + 
+                  Spr_chlA_biom_SEBS_scaled  +     
+                  Spr_chlA_peak_GOA_scaled  +     
+                  Spr_chlA_peak_SEBS_scaled  +  
+                  ann_Copepod_size_EGOA_scaled  +     
+                  Smr_CPUE_juv_ADFG_ln_scaled +    
+                  YOY_grwth_Middleton_scaled +
+                  smr_adult_cond_scaled, data=scaled_gam_dat) #
+summary(modAL)
+anova(modAL)
+
 
 #LOOCV - all time series=======
 
