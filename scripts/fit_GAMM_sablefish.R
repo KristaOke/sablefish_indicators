@@ -102,6 +102,8 @@ rec.plotn
 
 scaled_gam_dat <- scaled_dat[,names(scaled_dat) %in% noncor_covars3]
 
+#leave out 2020 b/c it's a longterm mean
+scaled_gam_dat <- scaled_gam_dat[which(scaled_gam_dat$Year<2020),]
 
 
 #new gams-----------
@@ -158,8 +160,28 @@ mod1_4 <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +
                 smr_adult_cond_scaled, data=scaled_gam_dat) #
 summary(mod1_4)
 anova(mod1_4)
+R1_4 <- residuals(mod1_4, type="pearson")
+acf(R1_4)
 
 #only ADFG survey is significant!
+
+cormod1_4 <- gls(ln_rec ~ Spr_ST_SEBS_scaled  +      
+               ann_Copepod_size_EGOA_scaled  +     
+               Smr_CPUE_juv_ADFG_ln_scaled +    
+               YOY_grwth_Middleton_scaled +
+               smr_adult_cond_scaled, 
+               correlation = corCompSymm(form = ~Year),
+                                           data=scaled_gam_dat, na.action = na.omit) #
+AIC(cormod1_4, mod1_4)
+
+cormod2_4 <- gls(ln_rec ~ Spr_ST_SEBS_scaled  +      
+                   ann_Copepod_size_EGOA_scaled  +     
+                   Smr_CPUE_juv_ADFG_ln_scaled +    
+                   YOY_grwth_Middleton_scaled +
+                   smr_adult_cond_scaled, 
+                 correlation = corAR1(form = ~Year),
+                 data=scaled_gam_dat, na.action = na.omit) #
+AIC(cormod2_4, mod1_4)
 
 
 #run on ONLY 4 longest time series
@@ -174,6 +196,8 @@ anova(mod1_5) #still only ADFG significant
 plot(mod1_5)
 ggplot(scaled_gam_dat, aes(Smr_CPUE_juv_ADFG_ln_scaled, ln_rec)) + geom_point() +
   geom_smooth(method="lm")
+R1_5 <- residuals(mod1_5, type="pearson")
+acf(R1_5)
 
 modAL <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +      
                   Smr_temp_250m_GOA_scaled +  #    
