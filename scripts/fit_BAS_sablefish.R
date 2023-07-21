@@ -97,6 +97,10 @@ test5_bas_dat <- testing5[,names(testing5) %in% noncor_covars3]
 
 scaled_bas_dat <- scaled[,names(scaled) %in% noncor_covars3]
 
+#leave out 2020 b/c it's a longterm mean
+scaled_bas_dat <- scaled_bas_dat[which(scaled_bas_dat$Year<2020),]
+
+
 #remove rows missing values???
 
 # train1_brt_dat <- train1_brt_dat[which(is.na(train1_brt_dat$ln_rec)==FALSE),]
