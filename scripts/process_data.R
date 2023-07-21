@@ -473,49 +473,21 @@ noncor3_long$type[which(noncor3_long$type=="smr_adult_cond_scaled")] <- "Summer 
     xlab("Scaled value") + ylab("ln(Recruitment)") + scale_colour_manual(values=c("red", "black"))
   
 
-#OLD======
+#plot time series fig 1======
 
-#now automate the process
-
-response <-  "ln_rec"
-explanatory_vars <- colnames(noncor_only[,!names(noncor_only) %in% c("Year", "ln_rec")])
-
-form.vars <- paste(explanatory_vars, collapse=" + ")
-form <- paste(response, "~",form.vars)
-
-vif_mod <- lm(formula = form, data=noncor_only)
-vif1 <- car::vif(vif_mod)
-vif1df <- as.data.frame(vif1)
-
-vif1ordered <- order(vif1df[,1]) #none of this is working!!!
-highest <- rownames(vif1df[which(vif1df[,1]==max(vif1df)),] )
-
-#uncentered vifs?-------
-
-vif.lm <- function(object, ...) {
-  V <- summary(object)$cov.unscaled
-  Vi <- crossprod(model.matrix(object))
-  nam <- names(coef(object))
-  k <- match("(Intercept)", nam,
-             nomatch = FALSE)
-  v1 <- diag(V)
-  v2 <- diag(Vi)
-  uc.struct <- structure(v1 * v2, names = nam)
-  if(k) {
-    v1 <- diag(V)[-k]
-    v2 <- diag(Vi)[-k] - Vi[k, -k]^2 / Vi[k, k]
-    nam <- nam[-k]
-    c.struct <- structure(v1 * v2, names = nam)
+  scaled <- read.csv(file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""), row.names = 1)
   
-           return(c(Centered.VIF = c.struct, Uncentered.VIF = uc.struct))
-  }
-  else{
-    warning(paste("No intercept term",
-                  "detected. Uncentered VIFs computed."))
-    return(Uncentered.VIF = uc.struct)
-  }
-}
-
-vif.lm(vmod) #also picks Spr_chlA_biom_GOA_scaled
-#after dropping that one
-vif.lm(vmod2) #all under 10
+  covar.list <- scaled[,c(1,18,24:43)] %>% gather(key=type, value=value, -Year)
+  head(covar.list)
+  
+  covar.list <- covar.list[which(covar.list$type!="spawner_mean_age_scaled"&
+                                   covar.list$type!= "spawner_age_evenness_scaled"),]
+  
+  expore.plot <- ggplot(covar.list, aes(x=Year, y=value, fill=type)) +
+    geom_point() +
+    scale_fill_viridis(discrete=TRUE) +
+    facet_wrap(~type, scales='free', ncol=4) +
+    theme(legend.position = "NA") + geom_line() 
+  expore.plot
+  
+  
