@@ -43,3 +43,8 @@ vignettes/*.pdf
 
 # Ignore DS_store
 .DS_Store
+
+# Ignore LARGE Stan output files
+output/*.rds
+
+
