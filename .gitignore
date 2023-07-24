@@ -37,3 +37,9 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# R Project files
+*.Rproj
+
+# Ignore DS_store
+.DS_Store
