@@ -66,6 +66,16 @@ n.iter <- 2e3
 n.thin <- 2
 
 #  1) Read in data =============================================================
+
+# DFA Trends (predictor)
+dat.dfa <- read_csv(file.path(dir.data, "pred_rec_std_aligned.csv"))
+head(dat.dfa)
+
+# Sablefish Recruitment Data (response)
+dat.rec <- read_csv(file.path(dir.data, "DFA_trends_recruit_data.csv"))
+head(dat.rec)
+
+
 #  2) Craft Stan Input Objects =================================================
 #  3) Function to Generate Initial Values ======================================
 #  4) Fit Stan model ===========================================================
