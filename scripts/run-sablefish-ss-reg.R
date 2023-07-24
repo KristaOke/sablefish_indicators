@@ -107,11 +107,55 @@ head(dat.comb)
 # Checkup
 # cv_norm_test <- sqrt(exp(dat.comb$sd_ln^2)-1) - Passed
 
-#  3) Function to Generate Initial Values ======================================
+# 
 
+#  3) Function to Generate Initial Values ======================================
+# Initialization Function
+init_fn <- function(chain_id=1) {
+  list( 
+    "scale" = runif(1, 1e3, 3e4),
+    "scale_hist" = runif(nYearPM, 1e4, 3e4),
+    "muDay" = rnorm(1,prior.muDay.mean,1),
+    "sigmaDay" = rnorm(1,prior.sigmaDay.mean,1),
+    "muDay_hist" = rnorm(nYearPM,prior.muDay.mean,1),
+    "sigmaDay_hist" = rnorm(nYearPM,prior.sigmaDay.mean,1),
+    "sigmaOE"=runif(1,0.5,1),
+    "sigmaOE_hist"=runif(nYearPM,0.5,1),
+    "prop_logis_pm"=runif(1,quantile(ce.props$prop.bay$prop, probs=0.25), 
+                          quantile(ce.props$prop.bay$prop, probs=0.25)),
+    "int_saa"=runif(n=1, min=min(Robs_saa), max=max(Robs_saa))
+  )
+}
+# init_fn()
+# Initial List of Lists for Multiple Chains
+init_ll <- lapply(1:n.chains, function(id) init_fn(chain_id = id))
 
 #  4) Fit Stan model ===========================================================
+#Fit the model
+stan.fit <- NULL
+if(fit==TRUE) {
+  stan.fit <- stan(file=file.path(dir.stan, paste0("sablefish-ss-reg-v", version, ".stan")),
+                   model_name=paste0("sablefish-ss-reg-v", version),
+                   data=list(
+                     ""=,
+                     ""=,
+                     ""=
+                   ),
+                   chains=n.chains, iter=n.iter, thin=n.thin,
+                   # chains=3, iter=5e3, thin=5,
+                   cores=n.chains, verbose=FALSE,
+                   seed=101,
+                   control = list(adapt_delta = 0.99),
+                   init=init_ll)
+  # Save Model Fit
+  saveRDS(stan.fit, file.path(dir.output, paste0(,".rds")))
 
+}else {
+  stan.fit <- readRDS(file.path(dir.output, paste0(, ".rds")))
+}
+
+
+pars <- rstan::extract(stan.fit)
 
 
 #  5) Plot Results =============================================================
