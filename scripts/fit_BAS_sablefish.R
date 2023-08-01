@@ -692,8 +692,12 @@ BAS_mae <- mae(output_df, truth=observed_ln_recruit,
                 estimate=predicted_ln_recruit, na.rm=TRUE)
 
 
+output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
 
+ggplot(output_df, aes(Year, diff, col=as.numeric(Year))) + 
+  geom_point() + geom_smooth(method="lm")
 
+write.csv(output_df, file=paste(wd,"/data/BAS_obsvpreds_reduced.csv", sep=""))
 
 
 
