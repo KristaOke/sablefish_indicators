@@ -100,7 +100,29 @@ avg5yr_rmse <- rmse(dat.temp, truth=ln_rec,
 avg5yr_mae <- mae(dat.temp, truth=ln_rec, 
                estimate=avg_prev_5yr_recruit, na.rm=TRUE)
 
+#from 1996
 
+obs_5_mod96 <- lm(ln_rec ~ avg_prev_5yr_recruit, data=dat.temp[which(dat.temp$Year>1995),])
+summary(obs_5_mod96)
+
+avg5yr_rmse96 <- rmse(dat.temp[which(dat.temp$Year>1995),], truth=ln_rec, 
+                    estimate=avg_prev_5yr_recruit, na.rm=TRUE)
+
+avg5yr_mae96 <- mae(dat.temp[which(dat.temp$Year>1995),], truth=ln_rec, 
+                  estimate=avg_prev_5yr_recruit, na.rm=TRUE)
+
+
+
+#from 2002
+
+obs_5_mod02 <- lm(ln_rec ~ avg_prev_5yr_recruit, data=dat.temp[which(dat.temp$Year>2001),])
+summary(obs_5_mod02)
+
+avg5yr_rmse02 <- rmse(dat.temp[which(dat.temp$Year>2001),], truth=ln_rec, 
+                    estimate=avg_prev_5yr_recruit, na.rm=TRUE)
+
+avg5yr_mae02 <- mae(dat.temp[which(dat.temp$Year>2001),], truth=ln_rec, 
+                  estimate=avg_prev_5yr_recruit, na.rm=TRUE)
 
 
 
