@@ -100,8 +100,8 @@ gbm.plot.fits(real.fit.1)
 gbm.perspec(real.fit.1, x=1, y=9, theta = 45, phi=10) #
 summary(real.fit.1)
 gbm.simplify(real.fit.1, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
-gbm.interactions(real.fit.1) #THERE IS A SST x ADFG interaction
-perf_n <- gbm.perf(real.fit.1)[1] #optimal # trees 562 but that's pretty low
+gbm.interactions(real.fit.1) #no interaction
+perf_n <- gbm.perf(real.fit.1)[1] #optimal # trees 710 but that's pretty low
 
 par(mar = c(5, 15, 2, 2))
 summary(real.fit.1, las=1)
@@ -109,7 +109,7 @@ summary(real.fit.1, las=1)
 #painful tuning section ==============
 
 #from real.fit.1
-total_dev <- 0.713
+total_dev <- 0.73
 
 #big loop to try all reasonable combos
 counter <- 1
@@ -151,7 +151,7 @@ output_list
 bestsofar <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
                       data = scaled_brt_dat,
                       family = "gaussian",                       
-                      tree.complexity = 1, 
+                      tree.complexity = 5, 
                       learning.rate = 0.0001, 
                       bag.fraction = 0.8,
                       n.minobsinnode=3,
@@ -163,7 +163,7 @@ perf_n <- gbm.perf(bestsofar)[1]
 finalbrt <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
                                   data = scaled_brt_dat,
                                   family = "gaussian",                       
-                                  tree.complexity = 1, 
+                                  tree.complexity = 5, 
                                   learning.rate = 0.0001, 
                                   bag.fraction = 1,
                                   n.minobsinnode=3,
@@ -177,10 +177,25 @@ gbm.plot.fits(finalbrt)
 gbm.perspec(finalbrt, x=1, y=9, theta = 45, phi=10) #
 summary(finalbrt)
 gbm.simplify(finalbrt, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
-gbm.interactions(finalbrt) #no interactions
+gbm.interactions(finalbrt) #
 
 
 dev_ex <- (total_dev-finalbrt$cv.statistics$deviance.mean)/total_dev
+
+
+#plot rel inf----
+
+summary_out <- summary(finalbrt)
+
+summary_out$var[which(summary_out$var=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
+summary_out$var[which(summary_out$var=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
+summary_out$var[which(summary_out$var=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
+summary_out$var[which(summary_out$var=="smr_adult_cond_scaled")] <- "Summer adult condition"
+
+
+ggplot(summary_out, aes(rel.inf, var)) + geom_col(fill="blue") + theme_bw() + ylab("Indicator") +
+  xlab("Relative influence")
+
 
 #plot within sample predictions----
 
@@ -246,7 +261,7 @@ real.fit.1 <- gbm.step(data=scaled_brt_dat, gbm.y=res1, gbm.x=fit.covars, family
                        learning.rate = 0.001, #slower b/c tc is low and want enough trees, paper recommends not fewer than 1000 trees
                        bag.fraction = 0.8, 
                        n.minobsinnode=3) #won't run with bag fraction lower than 0.8 for training dataset of 34 years
-total_dev <- 0.713
+total_dev <- 0.73
 
 real.fit.1$cv.statistics
 gbm.plot(real.fit.1)
@@ -263,7 +278,7 @@ summary(real.fit.1, las=1)
 #painful tuning section ==============
 
 #from real.fit.1
-total_dev <- 0.713
+total_dev <- 0.73
 
 #big loop to try all reasonable combos
 counter <- 1
@@ -305,36 +320,50 @@ output_list
 bestsofar <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
                       data = scaled_brt_dat,
                       family = "gaussian",                       
-                      tree.complexity = 5, 
+                      tree.complexity = 7, 
                       learning.rate = 0.0001, 
                       bag.fraction = 0.8,
                       n.minobsinnode=3,
                       n.folds = 5,
                       max.trees = 50000)
-perf_n <- gbm.perf(bestsofar)[1] #8148
+perf_n <- gbm.perf(bestsofar)[1] #8063
 (total_dev-bestsofar$cv.statistics$deviance.mean)/total_dev
 
 finalbrt <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
                      data = scaled_brt_dat,
                      family = "gaussian",                       
-                     tree.complexity = 5, 
+                     tree.complexity = 7, 
                      learning.rate = 0.0001, 
                      bag.fraction = 1,
                      n.minobsinnode=3,
                      n.folds = 5,
                      max.trees = 50000)
 
+
 plot(finalbrt$fitted, finalbrt$residuals)
 finalbrt$cv.statistics
 gbm.plot(finalbrt)
 gbm.plot.fits(finalbrt)
-gbm.perspec(finalbrt, x=1, y=3, theta = 45, phi=10) #
+gbm.perspec(finalbrt, x=1, y=3, theta = 45, phi=10, z.range=c(0,4)) #
 summary(finalbrt)
 gbm.simplify(finalbrt, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
 gbm.interactions(finalbrt) #interaction between SST and CPUE ADFG
 
 
 dev_ex <- (total_dev-finalbrt$cv.statistics$deviance.mean)/total_dev
+
+#plot rel inf----
+
+summary_out <- summary(finalbrt)
+
+summary_out$var[which(summary_out$var=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
+summary_out$var[which(summary_out$var=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
+summary_out$var[which(summary_out$var=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
+summary_out$var[which(summary_out$var=="smr_adult_cond_scaled")] <- "Summer adult condition"
+
+
+ggplot(summary_out, aes(rel.inf, var)) + geom_col(fill="blue") + theme_bw() + ylab("Indicator") +
+  xlab("Relative influence")
 
 #plot within sample predictions----
 
@@ -397,15 +426,10 @@ for(i in 1:length(scaled_loop_dat$Year)){
   output_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
   dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
   #fit model
- # temp_mod <- gbm(formula(form2), data=temp_dat, distribution='gaussian', 
- #      n.trees=10000, interaction.depth=1, n.minobsinnode=1,
- #      bag.fraction = 0.7,
- #      shrinkage=0.001)
-  #whole reduced data mod
   temp_mod <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
            data = scaled_brt_dat,
            family = "gaussian",                       
-           tree.complexity = 1, 
+           tree.complexity = 5, 
            learning.rate = 0.0001, 
            bag.fraction = 1,
            n.minobsinnode=3,
@@ -445,6 +469,14 @@ BRT_rmse <- rmse(output_df, truth=observed_ln_recruit,
 BRT_mae <- mae(output_df, truth=observed_ln_recruit, 
                estimate=predicted_ln_recruit, na.rm=TRUE)
 
+obs_pred_modpost2002 <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df[which(output_df$Year>2001),])
+summary(obs_pred_modpost2002)
+
+BRT_rmsepost2002 <- rmse(output_df[which(output_df$Year>2001),], truth=observed_ln_recruit, 
+                 estimate=predicted_ln_recruit, na.rm=TRUE)
+
+BRT_maepost2002 <- mae(output_df[which(output_df$Year>2001),], truth=observed_ln_recruit, 
+               estimate=predicted_ln_recruit, na.rm=TRUE)
 
 
 output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
@@ -452,9 +484,9 @@ output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
 ggplot(output_df, aes(Year, diff, col=as.numeric(Year))) + 
   geom_point() + geom_smooth(method="lm")
 
+write.csv(output_df, file=paste(wd,"/data/BRT_obsvpreds_reduced.csv", sep=""))
 
-
-
+output_df <- read.csv(file=paste(wd,"/data/BRT_obsvpreds_reduced.csv", sep=""))
 
 #LOOCV long time series====
 
@@ -505,9 +537,10 @@ for(i in 1:length(scaled_loop_dat$Year)){
 output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
 
 ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
-  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1)+ 
+  geom_point() + 
+  geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1)+ 
   geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year)) +
-  ylim(c(0,5)) + xlim(c(0,5))
+  ylim(c(0,5)) + xlim(c(0,5)) + theme_bw()
 
 #STEP 2 - get MSE, MAE, and R2------
 library(yardstick)
@@ -526,6 +559,19 @@ BRT_rmse <- rmse(output_df, truth=observed_ln_recruit,
 BRT_mae <- mae(output_df, truth=observed_ln_recruit, 
                estimate=predicted_ln_recruit, na.rm=TRUE)
 
+#compare some years
+
+obs_pred_mod96 <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=output_df[which(output_df$Year>1995),])
+summary(obs_pred_mod96)
+
+BRT_rmse96 <- rmse(output_df[which(output_df$Year>1995),], truth=observed_ln_recruit, 
+                 estimate=predicted_ln_recruit, na.rm=TRUE)
+
+BRT_mae96 <- mae(output_df[which(output_df$Year>1995),], truth=observed_ln_recruit, 
+               estimate=predicted_ln_recruit, na.rm=TRUE)
+
+
+
 
 
 output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
@@ -533,4 +579,7 @@ output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
 ggplot(output_df, aes(Year, diff, col=as.numeric(Year))) + 
   geom_point() + geom_smooth(method="lm")
 
+write.csv(output_df, file=paste(wd,"/data/BRT_obsvpreds_long.csv", sep=""))
+
+output_df <- read.csv(file=paste(wd,"/data/BRT_obsvpreds_long.csv", sep=""))
 
