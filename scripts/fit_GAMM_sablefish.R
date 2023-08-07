@@ -152,7 +152,7 @@ mod1_3 <- gam(ln_rec ~ Spr_ST_SEBS_scaled  +
 gam.check(mod1_3) #not good
 summary(mod1_3) #none are significantly nonlinear
 
-
+#best model
 mod1_4 <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +      
                 ann_Copepod_size_EGOA_scaled  +     
                 Smr_CPUE_juv_ADFG_ln_scaled +    
@@ -213,11 +213,92 @@ summary(modAL)
 anova(modAL)
 
 
+#within sample pred plot-----
+
+withinpred <- predict(mod1_4, scaled_gam_dat[which(scaled_gam_dat$Year>2000),c(3:12)])
+plotwithin <- scaled_gam_dat[which(scaled_gam_dat$Year>2000),]
+plotwithin$predicted <- withinpred
+
+ggplot(plotwithin, aes(Year, ln_rec)) + geom_point(aes(col="red")) + 
+  geom_line() + geom_point(aes(Year, predicted)) + geom_line(aes(Year, predicted)) + theme_bw()
+
+
+
+#from BAS
+# Plot Model Predictions vs. Observed ==============================
+#pdf(file.path(dir.figs,"Model Fit.pdf"), height=6, width=9)
+par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
+
+# Omit NAs
+dat.temp <- plotwithin
+
+plot(x=dat.temp$ln_rec, y=plotwithin$predicted,
+     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+# plot(x=plotwithin$fit, y=plotwithin$Ybma) 
+abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+
+# Timeseries
+plot(x=dat.temp$Year, y=dat.temp$ln_rec,
+     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+grid(lty=3, col='dark gray')
+points(x=dat.temp$Year, y=dat.temp$ln_rec,
+       pch=21, bg=rgb(1,0,0,alpha=0.5))
+lines(x=dat.temp$Year, y=plotwithin$predicted, lwd=3, col=rgb(0,0,1, alpha=0.5))
+#points(x=dat.temp$Year, y=plotwithin$predicted,
+#      pch=21, bg=rgb(0,1,0,alpha=0.5))
+
+legend('topleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
+                                                                 rgb(0,0,1, alpha=0.5)), bg="white")
+
+
+#
+
+#within sample pred plot LONG time series-----
+
+withinpred <- predict(mod1_5, scaled_gam_dat[which(scaled_gam_dat$Year>2000),c(3:12)])
+plotwithin <- scaled_gam_dat[which(scaled_gam_dat$Year>2000),]
+plotwithin$predicted <- withinpred
+
+ggplot(plotwithin, aes(Year, ln_rec)) + geom_point(aes(col="red")) + 
+  geom_line() + geom_point(aes(Year, predicted)) + geom_line(aes(Year, predicted)) + theme_bw()
+
+
+
+#from BAS
+# Plot Model Predictions vs. Observed ==============================
+#pdf(file.path(dir.figs,"Model Fit.pdf"), height=6, width=9)
+par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
+
+# Omit NAs
+dat.temp <- plotwithin
+
+plot(x=dat.temp$ln_rec, y=plotwithin$predicted,
+     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+# plot(x=plotwithin$fit, y=plotwithin$Ybma) 
+abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+
+# Timeseries
+plot(x=dat.temp$Year, y=dat.temp$ln_rec,
+     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+grid(lty=3, col='dark gray')
+points(x=dat.temp$Year, y=dat.temp$ln_rec,
+       pch=21, bg=rgb(1,0,0,alpha=0.5))
+lines(x=dat.temp$Year, y=plotwithin$predicted, lwd=3, col=rgb(0,0,1, alpha=0.5))
+#points(x=dat.temp$Year, y=plotwithin$predicted,
+#      pch=21, bg=rgb(0,1,0,alpha=0.5))
+
+
+
+
 #LOOCV - all time series=======
 
 #STEP 1 - Loop through training sets and fit models-------
 
-#ONLY 4 longest time series
+#
 scaled_loop_dat <- scaled_gam_dat
 
 yrs <- unique(scaled_loop_dat$Year)
@@ -248,9 +329,10 @@ for(i in 1:length(scaled_loop_dat$Year)){
 output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
 
 ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
-  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+  #geom_point() + 
+  geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
   geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))+
-  ylim(c(0,5)) + xlim(c(0,5))
+  ylim(c(0,5)) + xlim(c(0,5)) + theme_bw()
 
 #STEP 2 - get MSE, MAE, and R2------
 
@@ -273,6 +355,15 @@ GAM_rmse <- rmse(output_df, truth=observed_ln_recruit,
 
 GAM_mae <- mae(output_df, truth=observed_ln_recruit, 
                estimate=predicted_ln_recruit, na.rm=TRUE)
+
+
+
+output_df$diff <- output_df$predicted_ln_recruit - output_df$observed_ln_recruit
+
+ggplot(output_df, aes(Year, diff, col=as.numeric(Year))) + 
+  geom_point() + geom_smooth(method="lm")
+
+write.csv(output_df, file=paste(wd,"/data/GAM_obsvpreds_reduced.csv", sep=""))
 
 
 
@@ -314,9 +405,10 @@ for(i in 1:length(scaled_loop_dat$Year)){
 output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
 
 ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
-  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+  #geom_point() + 
+  geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
   geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))+
-  ylim(c(0,5)) + xlim(c(0,5))
+  ylim(c(0,5)) + xlim(c(0,5)) + theme_bw()
 
 #STEP 2 - get MSE, MAE, and R2------
 
