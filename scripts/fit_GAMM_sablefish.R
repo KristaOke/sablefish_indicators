@@ -10,6 +10,8 @@ library(mgcv)
 library(gamm4)
 library(corrplot)
 library(cowplot)
+library(heplots)
+library(car)
 
 #=============================================================
 #### Define Directory Structure ####
@@ -163,6 +165,9 @@ anova(mod1_4)
 R1_4 <- residuals(mod1_4, type="pearson")
 acf(R1_4)
 
+sumry1_4 <- summary(mod1_4)
+efsz1_4 <- effectsize::eta_squared(car::Anova(mod1_4, type=2), partial=TRUE)
+
 #only ADFG survey is significant!
 
 cormod1_4 <- gls(ln_rec ~ Spr_ST_SEBS_scaled  +      
@@ -199,6 +204,9 @@ ggplot(scaled_gam_dat, aes(Smr_CPUE_juv_ADFG_ln_scaled, ln_rec)) + geom_point() 
 R1_5 <- residuals(mod1_5, type="pearson")
 acf(R1_5)
 
+sumry1_5 <- summary(mod1_5)
+efsz1_5 <-effectsize::eta_squared(car::Anova(mod1_5, type=2), partial=TRUE)
+
 modAL <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +      
                   Smr_temp_250m_GOA_scaled +  #    
                   Spr_chlA_biom_GOA_scaled  + 
@@ -211,6 +219,78 @@ modAL <- lm(ln_rec ~ Spr_ST_SEBS_scaled  +
                   smr_adult_cond_scaled, data=scaled_gam_dat) #
 summary(modAL)
 anova(modAL)
+
+#plot effects and effect sizes------
+
+smryplot1_4 <- as.data.frame(sumry1_4$coefficients )
+smryplot1_4$var <- rownames(smryplot1_4)
+smryplot1_4$stderror <- smryplot1_4$`Std. Error`
+
+smryplot1_4$var[which(smryplot1_4$var=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
+smryplot1_4$var[which(smryplot1_4$var=="ann_Copepod_size_EGOA_scaled")] <- "Annual copepod community size EGOA"
+smryplot1_4$var[which(smryplot1_4$var=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
+smryplot1_4$var[which(smryplot1_4$var=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
+smryplot1_4$var[which(smryplot1_4$var=="smr_adult_cond_scaled")] <- "Summer adult condition"
+
+
+p1 <- ggplot(smryplot1_4[which(smryplot1_4$var!="(Intercept)"),], aes(Estimate, var)) + geom_point() + ylab("Indicator") +
+  xlab("Coefficient estimate") + theme_bw() + geom_errorbar(aes(xmin=Estimate-stderror,
+                                                                xmax=Estimate+stderror), width = 0.1) +
+  geom_vline(xintercept=0, col="red")
+p1
+#do same for partial eta sq
+
+efsz1_4$Parameter[which(efsz1_4$Parameter=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
+efsz1_4$Parameter[which(efsz1_4$Parameter=="ann_Copepod_size_EGOA_scaled")] <- "Annual copepod community size EGOA"
+efsz1_4$Parameter[which(efsz1_4$Parameter=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
+efsz1_4$Parameter[which(efsz1_4$Parameter=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
+efsz1_4$Parameter[which(efsz1_4$Parameter=="smr_adult_cond_scaled")] <- "Summer adult condition"
+
+p2 <- ggplot(efsz1_4, aes(Eta2_partial, Parameter)) + geom_point() + ylab("Indicator") +
+   xlab("Partial eta squared") + theme_bw() +# geom_errorbar(aes(xmin=CI_low,
+  #                                                               xmax=CI_high), width = 0.1) +
+  geom_vline(xintercept=0, col="red")
+p2
+
+plot_grid(p1,p2, nrow=2, ncol=1, rel_widths=c(3,1), align='h')
+
+
+
+#long time series
+
+smryplot1_5 <- as.data.frame(sumry1_5$coefficients )
+smryplot1_5$var <- rownames(smryplot1_5)
+smryplot1_5$stderror <- smryplot1_5$`Std. Error`
+
+smryplot1_5$var[which(smryplot1_5$var=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
+smryplot1_5$var[which(smryplot1_5$var=="ann_Copepod_size_EGOA_scaled")] <- "Annual copepod community size EGOA"
+smryplot1_5$var[which(smryplot1_5$var=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
+smryplot1_5$var[which(smryplot1_5$var=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
+smryplot1_5$var[which(smryplot1_5$var=="smr_adult_cond_scaled")] <- "Summer adult condition"
+
+
+p3 <- ggplot(smryplot1_5[which(smryplot1_5$var!="(Intercept)"),], aes(Estimate, var)) + geom_point() + ylab("Indicator") +
+  xlab("Coefficient estimate") + theme_bw() + geom_errorbar(aes(xmin=Estimate-stderror,
+                                                                xmax=Estimate+stderror), width = 0.1) +
+  geom_vline(xintercept=0, col="red")
+p3
+#do same for partial eta sq
+
+efsz1_5$Parameter[which(efsz1_5$Parameter=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
+efsz1_5$Parameter[which(efsz1_5$Parameter=="ann_Copepod_size_EGOA_scaled")] <- "Annual copepod community size EGOA"
+efsz1_5$Parameter[which(efsz1_5$Parameter=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
+efsz1_5$Parameter[which(efsz1_5$Parameter=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
+efsz1_5$Parameter[which(efsz1_5$Parameter=="smr_adult_cond_scaled")] <- "Summer adult condition"
+
+p4 <- ggplot(efsz1_5, aes(Eta2_partial, Parameter)) + geom_point() + ylab("Indicator") +
+  xlab("Partial eta squared") + theme_bw() +# geom_errorbar(aes(xmin=CI_low,
+  #                                                               xmax=CI_high), width = 0.1) +
+  geom_vline(xintercept=0, col="red")
+p4
+
+plot_grid(p3,p4, nrow=2, ncol=1, rel_widths=c(3,1), align='h')
+
+
 
 
 #within sample pred plot-----
