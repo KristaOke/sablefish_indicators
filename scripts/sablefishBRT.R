@@ -191,6 +191,12 @@ summary_out$var[which(summary_out$var=="Spr_ST_SEBS_scaled")] <- "Spring SST SEB
 summary_out$var[which(summary_out$var=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
 summary_out$var[which(summary_out$var=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
 summary_out$var[which(summary_out$var=="smr_adult_cond_scaled")] <- "Summer adult condition"
+summary_out$var[which(summary_out$var=="Smr_temp_250m_GOA_scaled")] <- "Summer 250m temperature GOA"
+summary_out$var[which(summary_out$var=="Spr_chlA_biom_GOA_scaled")] <- "Spring chlorophyll A biomass GOA"
+summary_out$var[which(summary_out$var=="Spr_chlA_biom_SEBS_scaled")] <- "Spring chlorophyll A biomass SEBS"
+summary_out$var[which(summary_out$var=="Spr_chlA_peak_GOA_scaled")] <- "Spring chlorophyll A peak GOA"
+summary_out$var[which(summary_out$var=="Spr_chlA_peak_SEBS_scaled")] <- "Spring chlorophyll A peak SEBS"
+summary_out$var[which(summary_out$var=="ann_Copepod_size_EGOA_scaled")] <- "Annual copepod community size EGOA"
 
 
 ggplot(summary_out, aes(rel.inf, var)) + geom_col(fill="blue") + theme_bw() + ylab("Indicator") +
