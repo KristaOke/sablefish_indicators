@@ -45,17 +45,6 @@ offset <- 0
 
 # load data that is already z-scored, checked for correlations
 
-train1 <- read.csv(file=paste(wd,"/data/dataset_training1.csv", sep=""), row.names = 1)
-train2 <- read.csv(file=paste(wd,"/data/dataset_training2.csv", sep=""), row.names = 1)
-train3 <- read.csv(file=paste(wd,"/data/dataset_training3.csv", sep=""), row.names = 1)
-train4 <- read.csv(file=paste(wd,"/data/dataset_training4.csv", sep=""), row.names = 1)
-train5 <- read.csv(file=paste(wd,"/data/dataset_training5.csv", sep=""), row.names = 1)
-
-testing1 <- read.csv(file=paste(wd,"/data/dataset_testing1.csv", sep=""), row.names = 1)
-testing2 <- read.csv(file=paste(wd,"/data/dataset_testing2.csv", sep=""), row.names = 1)
-testing3 <- read.csv(file=paste(wd,"/data/dataset_testing3.csv", sep=""), row.names = 1)
-testing4 <- read.csv(file=paste(wd,"/data/dataset_testing4.csv", sep=""), row.names = 1)
-testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.names = 1)
 
 scaled <- read.csv(file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""), row.names = 1)
 
@@ -83,38 +72,10 @@ noncor_covars3 <- c("Year", "ln_rec",
                     "smr_adult_cond_scaled")
 
 
-train1_bas_dat <- train1[,names(train1) %in% noncor_covars3]
-train2_bas_dat <- train2[,names(train2) %in% noncor_covars3]
-train3_bas_dat <- train3[,names(train3) %in% noncor_covars3]
-train4_bas_dat <- train4[,names(train4) %in% noncor_covars3]
-train5_bas_dat <- train5[,names(train5) %in% noncor_covars3]
-
-test1_bas_dat <- testing1[,names(testing1) %in% noncor_covars3]
-test2_bas_dat <- testing2[,names(testing2) %in% noncor_covars3]
-test3_bas_dat <- testing3[,names(testing3) %in% noncor_covars3]
-test4_bas_dat <- testing4[,names(testing4) %in% noncor_covars3]
-test5_bas_dat <- testing5[,names(testing5) %in% noncor_covars3]
-
 scaled_bas_dat <- scaled[,names(scaled) %in% noncor_covars3]
 
 #leave out 2020 b/c it's a longterm mean
 scaled_bas_dat <- scaled_bas_dat[which(scaled_bas_dat$Year<2020),]
-
-
-#remove rows missing values???
-
-# train1_brt_dat <- train1_brt_dat[which(is.na(train1_brt_dat$ln_rec)==FALSE),]
-# train2_brt_dat <- train2_brt_dat[which(is.na(train2_brt_dat$ln_rec)==FALSE),]
-# train3_brt_dat <- train3_brt_dat[which(is.na(train3_brt_dat$ln_rec)==FALSE),]
-# train4_brt_dat <- train4_brt_dat[which(is.na(train4_brt_dat$ln_rec)==FALSE),]
-# train5_brt_dat <- train5_brt_dat[which(is.na(train5_brt_dat$ln_rec)==FALSE),]
-# 
-# test1_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
-# test2_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
-# test3_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
-# test4_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
-# test5_brt_dat <- test1_brt_dat[which(is.na(test1_brt_dat$ln_rec)==FALSE),]
-
 
 
 
@@ -583,9 +544,10 @@ for(i in 1:length(scaled_loop_dat$Year)){
 output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
 
 ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
-  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+ # geom_point() + 
+  geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
   geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))+
-  ylim(c(0,5)) + xlim(c(0,5))
+  ylim(c(0,5)) + xlim(c(0,5)) + theme_bw()
 
 #get MSE & MAE------
 
@@ -607,7 +569,7 @@ BAS_long_rmse <- rmse(output_df, truth=observed_ln_recruit,
 BAS_long_mae <- mae(output_df, truth=observed_ln_recruit, 
                estimate=predicted_ln_recruit, na.rm=TRUE)
 
-
+write.csv(output_df, file=paste(wd,"/data/BAS_obsvpreds_long.csv", sep=""))
 
 #LOOCV on short time series-------
 
@@ -672,9 +634,10 @@ for(i in 1:length(scaled_loop_dat$Year)){
 output_df$predicted_ln_recruit <- as.numeric(as.character(output_df$predicted_ln_recruit))
 
 ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
-  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+  #geom_point() + 
+  geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
   geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))+
-  ylim(c(0,5)) + xlim(c(0,5))
+  ylim(c(0,5)) + xlim(c(0,5)) + theme_bw()
 
 #get MSE & MAE------
 library(yardstick)
