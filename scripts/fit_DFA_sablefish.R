@@ -39,29 +39,11 @@ dir.figs <- file.path(wd,"figs")
 
 # load data
 
-
-train1 <- read.csv(file=paste(wd,"/data/dataset_training1.csv", sep=""), row.names = 1)
-train2 <- read.csv(file=paste(wd,"/data/dataset_training2.csv", sep=""), row.names = 1)
-train3 <- read.csv(file=paste(wd,"/data/dataset_training3.csv", sep=""), row.names = 1)
-train4 <- read.csv(file=paste(wd,"/data/dataset_training4.csv", sep=""), row.names = 1)
-train5 <- read.csv(file=paste(wd,"/data/dataset_training5.csv", sep=""), row.names = 1)
-
-testing1 <- read.csv(file=paste(wd,"/data/dataset_testing1.csv", sep=""), row.names = 1)
-testing2 <- read.csv(file=paste(wd,"/data/dataset_testing2.csv", sep=""), row.names = 1)
-testing3 <- read.csv(file=paste(wd,"/data/dataset_testing3.csv", sep=""), row.names = 1)
-testing4 <- read.csv(file=paste(wd,"/data/dataset_testing4.csv", sep=""), row.names = 1)
-testing5 <- read.csv(file=paste(wd,"/data/dataset_testing5.csv", sep=""), row.names = 1)
-
 scaled <- read.csv(file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""), row.names = 1)
 
 #DATA CONTROL SECTION----
 
 #select the z-scored columns, no recruitment
-train1_dfa_dat <- train1[,c(1,24:43)]
-train2_dfa_dat <- train2[,c(1,24:43)]
-train3_dfa_dat <- train3[,c(1,24:43)]
-train4_dfa_dat <- train4[,c(1,24:43)]
-train5_dfa_dat <- train5[,c(1,24:43)]
 
 scaled_dfa_dat <- scaled[,c(1,24:43)]
 
@@ -72,31 +54,6 @@ scaled_dfa_dat <- scaled[,c(1,24:43)]
 #also remove arrowtooth biomass b/c it's not converging even in best model
 #same reason dropping sebs ST
 
-train1_dfa_dat <- train1_dfa_dat[,!names(train1_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
-                                                     "spawner_mean_age_scaled",
-                                                     "spawner_age_evenness_scaled",
-                                                     "arrowtooth_biomass_scaled",
-                                                     "Smr_condition_fem_age4_GOA_scaled")]
-train2_dfa_dat <- train2_dfa_dat[,!names(train2_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
-                                                                "spawner_mean_age_scaled",
-                                                                "spawner_age_evenness_scaled",
-                                                                "arrowtooth_biomass_scaled",
-                                                                "Smr_condition_fem_age4_GOA_scaled")]
-train3_dfa_dat <- train3_dfa_dat[,!names(train3_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
-                                                                "spawner_mean_age_scaled",
-                                                                "spawner_age_evenness_scaled",
-                                                                "arrowtooth_biomass_scaled",
-                                                                "Smr_condition_fem_age4_GOA_scaled")]
-train4_dfa_dat <- train4_dfa_dat[,!names(train4_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
-                                                                "spawner_mean_age_scaled",
-                                                                "spawner_age_evenness_scaled",
-                                                                "arrowtooth_biomass_scaled",
-                                                                "Smr_condition_fem_age4_GOA_scaled")]
-train5_dfa_dat <- train5_dfa_dat[,!names(train5_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
-                                                                "spawner_mean_age_scaled",
-                                                                "spawner_age_evenness_scaled",
-                                                                "arrowtooth_biomass_scaled",
-                                                                "Smr_condition_fem_age4_GOA_scaled")]
 
 scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
                                                                 "spawner_mean_age_scaled",
@@ -109,46 +66,13 @@ scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Smr_euph_abun_K
 #manupulate data for DFA========
 
 #check to make sure years are in order!
-train1_dfa_dat$Year==train1_dfa_dat$Year[order(train1_dfa_dat$Year)] #SHOULD BE ALL TRUE
-train2_dfa_dat$Year==train2_dfa_dat$Year[order(train2_dfa_dat$Year)] #SHOULD BE ALL TRUE
-train3_dfa_dat$Year==train3_dfa_dat$Year[order(train3_dfa_dat$Year)] #SHOULD BE ALL TRUE
-train4_dfa_dat$Year==train4_dfa_dat$Year[order(train4_dfa_dat$Year)] #SHOULD BE ALL TRUE
-train5_dfa_dat$Year==train5_dfa_dat$Year[order(train5_dfa_dat$Year)] #SHOULD BE ALL TRUE
 
 scaled_dfa_dat$Year==scaled_dfa_dat$Year[order(scaled_dfa_dat$Year)] #SHOULD BE ALL TRUE
 
 #then drop Year column
-train1_dfa_dat <- train1_dfa_dat[,!names(train1_dfa_dat) %in% c("Year")]
-train2_dfa_dat <- train2_dfa_dat[,!names(train2_dfa_dat) %in% c("Year")]
-train3_dfa_dat <- train3_dfa_dat[,!names(train3_dfa_dat) %in% c("Year")]
-train4_dfa_dat <- train4_dfa_dat[,!names(train4_dfa_dat) %in% c("Year")]
-train5_dfa_dat <- train5_dfa_dat[,!names(train5_dfa_dat) %in% c("Year")]
 
 scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Year")]
 
-
-z.mat1 <- t(as.matrix(train1_dfa_dat))
-colnames(z.mat1) <- z.mat1[1,]
-#z.mat1 <- z.mat1[-1,] #remove year above
-
-#try w ALL DATA------
-
-scaled <- read.csv(file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""), row.names = 1)
-
-#select the z-scored columns, no recruitment
-scaled_dfa_dat <- scaled[,c(1,24:43)]
-
-scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Smr_euph_abun_Kod_scaled",
-                                                                "spawner_mean_age_scaled",
-                                                                "spawner_age_evenness_scaled",
-                                                                "arrowtooth_biomass_scaled",
-                                                                "Smr_condition_fem_age4_GOA_scaled")]
-
-#check to make sure years are in order!
-scaled_dfa_dat$Year==scaled_dfa_dat$Year[order(scaled_dfa_dat$Year)] #SHOULD BE ALL TRUE
-
-#then drop Year column
-#scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Year")]
 
 z.mat1 <- t(as.matrix(scaled_dfa_dat))
 colnames(z.mat1) <- z.mat1[1,]
