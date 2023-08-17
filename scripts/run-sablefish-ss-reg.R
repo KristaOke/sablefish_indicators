@@ -137,8 +137,8 @@ if(fit==TRUE) {
   stan.fit <- stan(file=file.path(dir.stan, paste0("sablefish-ss-reg-v", version, ".stan")),
                    model_name=paste0("sablefish-ss-reg-v", version),
                    data=list(
-                     ""=,
-                     ""=,
+                     "n_years"=n_years,
+                     "rec_ln"=,
                      ""=
                    ),
                    chains=n.chains, iter=n.iter, thin=n.thin,
