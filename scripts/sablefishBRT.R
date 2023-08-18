@@ -458,6 +458,12 @@ ggplot(output_df, aes(observed_ln_recruit, predicted_ln_recruit)) +
   geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year)) +
   ylim(c(0,5)) + xlim(c(0,5))
 
+ggplot(output_df[which(output_df$Year>2001),], aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  geom_point() + geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1)+ 
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year)) +
+  ylim(c(0,5)) + xlim(c(0,5))
+
+
 #STEP 2 - get MSE, MAE, and R2------
 library(yardstick)
 #get MSE & MAE------
@@ -492,7 +498,7 @@ ggplot(output_df, aes(Year, diff, col=as.numeric(Year))) +
 
 write.csv(output_df, file=paste(wd,"/data/BRT_obsvpreds_reduced.csv", sep=""))
 
-output_df <- read.csv(file=paste(wd,"/data/BRT_obsvpreds_reduced.csv", sep=""))
+output_df_reduced <- read.csv(file=paste(wd,"/data/BRT_obsvpreds_reduced.csv", sep=""))
 
 #LOOCV long time series====
 
@@ -587,5 +593,35 @@ ggplot(output_df, aes(Year, diff, col=as.numeric(Year))) +
 
 write.csv(output_df, file=paste(wd,"/data/BRT_obsvpreds_long.csv", sep=""))
 
-output_df <- read.csv(file=paste(wd,"/data/BRT_obsvpreds_long.csv", sep=""))
+output_df_long <- read.csv(file=paste(wd,"/data/BRT_obsvpreds_long.csv", sep=""))
+
+
+
+
+#repeat same plot as within-----
+par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
+
+# Omit NAs
+dat.temp <- output_df_long
+
+plot(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
+     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+# plot(x=pred.bas$fit, y=pred.bas$Ybma) 
+abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+points(x=dat.temp$observed_ln_recruit, y=output_df_reduced$predicted_ln_recruit,
+       pch=21, bg=rgb(0,1,0.5,alpha=0.5))
+
+# Timeseries
+plot(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
+     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"), ylim=c(0,5), xlim=c(1975,2021))
+grid(lty=3, col='dark gray')
+# points(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
+#        pch=21, bg=rgb(1,0,0,alpha=0.5))
+lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,0,1, alpha=0.5))
+lines(x=dat.temp$Year, y=output_df_reduced$predicted_ln_recruit, lwd=3, col=rgb(0,1,0.5, alpha=0.5))
+# points(x=dat.temp$Year, y=output_df$predicted_ln_recruit,
+#        pch=21, bg=rgb(0,1,0,alpha=0.5))
+
 
