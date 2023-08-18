@@ -71,7 +71,7 @@ scaled_dfa_dat$Year==scaled_dfa_dat$Year[order(scaled_dfa_dat$Year)] #SHOULD BE 
 
 #then drop Year column
 
-scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Year")]
+#scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Year")]
 
 
 z.mat1 <- t(as.matrix(scaled_dfa_dat))
@@ -84,7 +84,7 @@ z.mat1 <- z.mat1[-1,]
 # now fit DFA models with 1-3 trends and different error structures and compare
 
 # changing convergence criterion to ensure convergence
-cntl.list = list(minit=200, maxit=30000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
+cntl.list = list(minit=200, maxit=100000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
 # set up forms of R matrices
 levels.R = c("diagonal and equal",
@@ -109,6 +109,7 @@ for(R in levels.R) {
                                   logLik=kemz$logLik,
                                   K=kemz$num.params,
                                   AICc=kemz$AICc,
+                                  conv=kemz$convergence,
                                   stringsAsFactors=FALSE))
     assign(paste("kemz", m, R, sep="."), kemz)
   } # end m loop
@@ -122,7 +123,9 @@ model.data1 <- model.data1 %>%
   arrange(dAICc)
 model.data1
 
-write_csv(model.data1, file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_zscor-fixed.csv", sep=""))
+#write_csv(model.data1, file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_zscor-fixed.csv", sep=""))
+write_csv(model.data1, file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_zscor-fixed_conv.csv", sep=""))
+model.data1 <- read_csv(file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_zscor-fixed.csv", sep=""))
 
 
 #---
@@ -134,7 +137,7 @@ cntl.listB = list(minit=200, maxit=100000, allow.degen=FALSE, conv.test.slope.to
 # set up forms of R matrices
 levels.R = c("diagonal and equal",
              "diagonal and unequal",
-             "equalvarcov",
+             #"equalvarcov",
              "unconstrained")
 
 #Run each and save output separately
@@ -154,6 +157,7 @@ for(R in levels.R) {
                                   logLik=kemz$logLik,
                                   K=kemz$num.params,
                                   AICc=kemz$AICc,
+                                  conv=kemz$convergence,
                                   stringsAsFactors=FALSE))
     assign(paste("kemz", m, R, sep="."), kemz)
   } # end m loop
@@ -167,7 +171,9 @@ model.dataB <- model.dataB %>%
   arrange(dAICc)
 model.dataB
 
-write_csv(model.dataB, file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_BFGS.csv", sep=""))
+#write_csv(model.dataB, file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_BFGS.csv", sep=""))
+write_csv(model.dataB, file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_BFGS_conv.csv", sep=""))
+model.dataB <- read_csv(file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_BFGS.csv", sep=""))
 
 
 
@@ -206,10 +212,10 @@ Z.rot[,2] <- -Z.rot[,2]
 Z.rot <- Z.est
 proc_rot =  model.1$states 
 
-Z.rot$names <- rownames(z.mat1)
-Z.rot <- arrange(Z.rot, V1)
-Z.rot <- gather(Z.rot[,c(1,2)])
-Z.rot$names <- rownames(z.mat1)
+#Z.rot$names <- rownames(z.mat1)
+#Z.rot <- arrange(Z.rot, V1)
+#Z.rot <- gather(Z.rot[,c(1,2)])
+#Z.rot$names <- rownames(z.mat1)
 #Z.rot$plot.names <- reorder(Z.rot$names, 1:14)
 
 
@@ -243,15 +249,15 @@ TT <- dim(z.mat1)[2]
 ## get the estimated ZZ
 Z_est <- coef(model.1, type = "matrix")$Z
 ## get the inverse of the rotation matrix
-H_inv <- varimax(Z_est)$rotmat
+#H_inv <- varimax(Z_est)$rotmat
 
 ## rotate factor loadings
-Z_rot = Z_est %*% H_inv
+#Z_rot = Z_est %*% H_inv
 #IF ONE TREND
 Z_rot <- Z_est
 
 ## rotate processes
-proc_rot = solve(H_inv) %*% model.1$states
+#proc_rot = solve(H_inv) %*% model.1$states
 
 #if 1 trend don't rotate?????
 proc_rot =  model.1$states
@@ -382,9 +388,9 @@ ccf(proc_rot[1, ], proc_rot[2, ], lag.max = 12, main = "")
 # now fit second best model
 
 model.list.2 = list(A="zero", m=2, R="diagonal and unequal") # second best model
-model.2 = MARSS(z.mat1, model=model.list.2, z.score=FALSE, form="dfa", control=cntl.list2)
+model.2 = MARSS(z.mat1, model=model.list.2, method="BFGS", z.score=FALSE, form="dfa")#, control=cntl.list2)
 #
-cntl.list2 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
+cntl.list2 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001, method="BFGS" )
 
 autoplot(model.2) #says check MARSSresiduals.tt1 warning message
 MARSSresiduals(model.2, type="tt1") #seems like error b/c of NAs creating noninvertable matrix in residuals
@@ -575,9 +581,9 @@ for (i in 1:N_ts) {
 
 # now fit best model
 
-model.list.3 = list(A="zero", m=1, R="equalvarcov") # 
-model.3 = MARSS(z.mat1, model=model.list.3, z.score=FALSE, form="dfa", control=cntl.list)
-#DOES NOT CONVERGE bump up to 60K iter
+model.list.3 = list(A="zero", m=1, R="diagonal and unequal") # 
+model.3 = MARSS(z.mat1, model=model.list.3, z.score=FALSE, form="dfa", method="BFGS")
+#
 cntl.list3 = list(minit=200, maxit=20000, allow.degen=FALSE, conv.test.slope.tol=0.1, abstol=0.0001)
 
 autoplot(model.3)
