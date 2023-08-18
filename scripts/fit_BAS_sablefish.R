@@ -665,6 +665,8 @@ ggplot(output_df, aes(Year, diff, col=as.numeric(Year))) +
 write.csv(output_df, file=paste(wd,"/data/BAS_obsvpreds_reduced.csv", sep=""))
 output_df_reduced <- read.csv(file=paste(wd,"/data/BAS_obsvpreds_reduced.csv", sep=""))
 
+
+
 #repeat same plot as within-----
 par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 
@@ -691,4 +693,4 @@ lines(x=dat.temp$Year, y=output_df_reduced$predicted_ln_recruit, lwd=3, col=rgb(
 # points(x=dat.temp$Year, y=output_df$predicted_ln_recruit,
 #        pch=21, bg=rgb(0,1,0,alpha=0.5))
 
-#maybe add the long series predictions to same plot?
+
