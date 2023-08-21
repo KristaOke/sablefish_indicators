@@ -832,6 +832,8 @@ quickmod <- lm(ln_rec ~ states, data=model1_reg_dat)
 anova(quickmod)
 ggplot(model1_reg_dat, aes(states, ln_rec)) + geom_point()+ geom_smooth()
 
+
+
 #model.2
 model.2_trends$Year <- as.numeric(model.2_trends$Year)
 model2_reg_dat <- left_join(model.2_trends, scaled)
@@ -879,4 +881,195 @@ trends_join$Year <- as.integer(trends_join$Year)
 trends_rec_dat <- left_join(trends_join, scaled[,names(scaled) %in% c("ln_rec", "Year")])
 
 write_csv(trends_rec_dat, file = paste(wd,"/data/DFA_trends_recruit_data.csv", sep=""))
+
+
+#RMSE and MAE on simple regressions------
+library(yardstick)
+
+scaled_loop_dat <- model1_reg_dat
+
+yrs <- unique(scaled_loop_dat$Year)
+quick1_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
+colnames(quick1_df) <- c("Year", "observed_ln_recruit", "predicted_ln_recruit")
+
+i<-1
+for(i in 1:length(scaled_loop_dat$Year)){
+  print(i)
+  temp_dat <- scaled_loop_dat[-i,]
+  
+  temp_dat <- temp_dat[-which(names(temp_dat) %in% c("Year"))]
+  #temp_dat <- temp_dat[which(names(temp_dat) %in% covars)]
+  
+  dropped_yr <- scaled_loop_dat[i,]
+  quick1_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  #dropped_yr <- dropped_yr[,names(dropped_yr) %in% covars]
+  dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
+  print(dropped_yr$Year)
+  #fit model
+  q1.loop <-   lm(ln_rec ~ states, data=temp_dat)
+  
+  #have model predict to missing year
+  temp_predict <- predict(q1.loop, newdata=dropped_yr)
+  
+  #write to output object so we can compare predicted vs obs
+  quick1_df$Year[i] <- dropped_yr$Year
+  quick1_df$predicted_ln_recruit[i] <- temp_predict
+}
+
+quick1_df <- quick1_df[which(quick1_df$Year<2020),]
+
+quick1_df$predicted_ln_recruit <- as.numeric(as.character(quick1_df$predicted_ln_recruit))
+
+ggplot(quick1_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  #geom_point() + 
+  geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))+
+  ylim(c(0,5)) + xlim(c(0,5)) + theme_bw()
+
+
+obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=quick1_df)
+summary(obs_pred_mod)
+
+quick1_rmse <- rmse(quick1_df, truth=observed_ln_recruit, 
+                 estimate=predicted_ln_recruit, na.rm=TRUE)
+
+quick1_mae <- mae(quick1_df, truth=observed_ln_recruit, 
+               estimate=predicted_ln_recruit, na.rm=TRUE)
+
+quick1_df$diff <- quick1_df$predicted_ln_recruit - quick1_df$observed_ln_recruit
+
+ggplot(quick1_df, aes(Year, diff, col=as.numeric(Year))) + 
+  geom_point() + geom_smooth(method="lm")
+
+obs_pred_mod96 <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=quick1_df[which(quick1_df$Year>1995),])
+summary(obs_pred_mod96)
+
+quick1_rmse96 <- rmse(quick1_df[which(quick1_df$Year>1995),], truth=observed_ln_recruit, 
+                    estimate=predicted_ln_recruit, na.rm=TRUE)
+
+quick1_mae96 <- mae(quick1_df[which(quick1_df$Year>1995),], truth=observed_ln_recruit, 
+                  estimate=predicted_ln_recruit, na.rm=TRUE)
+
+
+#second best model
+scaled_loop_dat <- model2_reg_dat
+
+yrs <- unique(scaled_loop_dat$Year)
+quick2_df <- data.frame(matrix(ncol=3, nrow = length(yrs)))
+colnames(quick2_df) <- c("Year", "observed_ln_recruit", "predicted_ln_recruit")
+
+i<-1
+for(i in 1:length(scaled_loop_dat$Year)){
+  print(i)
+  temp_dat <- scaled_loop_dat[-i,]
+  
+  temp_dat <- temp_dat[-which(names(temp_dat) %in% c("Year"))]
+  #temp_dat <- temp_dat[which(names(temp_dat) %in% covars)]
+  
+  dropped_yr <- scaled_loop_dat[i,]
+  quick2_df$observed_ln_recruit[i] <- dropped_yr$ln_rec
+  #dropped_yr <- dropped_yr[,names(dropped_yr) %in% covars]
+  dropped_yr <- dropped_yr[,!names(dropped_yr) %in% "ln_rec"]
+  print(dropped_yr$Year)
+  #fit model
+  q2.loop <-   lm(ln_rec ~ state1 + state2, data=temp_dat)
+  
+  #have model predict to missing year
+  temp_predict <- predict(q2.loop, newdata=dropped_yr)
+  
+  #write to output object so we can compare predicted vs obs
+  quick2_df$Year[i] <- dropped_yr$Year
+  quick2_df$predicted_ln_recruit[i] <- temp_predict
+}
+
+quick2_df <- quick2_df[which(quick2_df$Year<2020),]
+
+quick2_df$predicted_ln_recruit <- as.numeric(as.character(quick2_df$predicted_ln_recruit))
+
+ggplot(quick2_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  #geom_point() + 
+  geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))+
+  ylim(c(0,5)) + xlim(c(0,5)) + theme_bw()
+
+
+obs_pred_mod2 <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=quick2_df)
+summary(obs_pred_mod2)
+
+quick2_rmse <- rmse(quick2_df, truth=observed_ln_recruit, 
+                    estimate=predicted_ln_recruit, na.rm=TRUE)
+
+quick2_mae <- mae(quick2_df, truth=observed_ln_recruit, 
+                  estimate=predicted_ln_recruit, na.rm=TRUE)
+
+quick2_df$diff <- quick2_df$predicted_ln_recruit - quick2_df$observed_ln_recruit
+
+ggplot(quick2_df, aes(Year, diff, col=as.numeric(Year))) + 
+  geom_point() + geom_smooth(method="lm")
+
+obs_pred_mod296 <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=quick2_df[which(quick2_df$Year>1995),])
+summary(obs_pred_mod296)
+
+quick2_rmse96 <- rmse(quick2_df[which(quick2_df$Year>1995),], truth=observed_ln_recruit, 
+                      estimate=predicted_ln_recruit, na.rm=TRUE)
+
+quick2_mae96 <- mae(quick2_df[which(quick2_df$Year>1995),], truth=observed_ln_recruit, 
+                    estimate=predicted_ln_recruit, na.rm=TRUE)
+
+#repeat same plot as within-----
+par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
+
+# Omit NAs
+dat.temp <- quick1_df
+
+plot(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
+     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+# plot(x=pred.bas$fit, y=pred.bas$Ybma) 
+abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+# points(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
+#        pch=21, bg=rgb(0,1,0.5,alpha=0.5))
+
+# Timeseries
+plot(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
+     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"), ylim=c(0,5), xlim=c(1975,2021))
+grid(lty=3, col='dark gray')
+# points(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
+#        pch=21, bg=rgb(1,0,0,alpha=0.5))
+lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,0,1, alpha=0.5))
+#lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,1,0.5, alpha=0.5))
+# points(x=dat.temp$Year, y=output_df$predicted_ln_recruit,
+#        pch=21, bg=rgb(0,1,0,alpha=0.5))
+
+
+#second best
+#repeat same plot as within-----
+par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
+
+# Omit NAs
+dat.temp <- quick2_df
+
+plot(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
+     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"))
+# plot(x=pred.bas$fit, y=pred.bas$Ybma) 
+abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+# points(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
+#        pch=21, bg=rgb(0,1,0.5,alpha=0.5))
+
+# Timeseries
+plot(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
+     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
+     main=paste("Sablefish"), ylim=c(0,5), xlim=c(1975,2021))
+grid(lty=3, col='dark gray')
+# points(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
+#        pch=21, bg=rgb(1,0,0,alpha=0.5))
+lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,0,1, alpha=0.5))
+#lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,1,0.5, alpha=0.5))
+# points(x=dat.temp$Year, y=output_df$predicted_ln_recruit,
+#        pch=21, bg=rgb(0,1,0,alpha=0.5))
+
+
+#
 
