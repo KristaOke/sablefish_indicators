@@ -63,6 +63,13 @@ version <- 1
 mod <- c("model1", "model2")[1]
 mod.name <- paste0(mod, "_", "v", version)
 
+# Determine number of DFA trends to fit
+if(mod=="model1") {
+  n_trends <- 1  
+}else {
+  n_trends <- 2
+}
+
 # Do we fit the model, or just load saved .rds outputs
 fit <- TRUE 
 
@@ -84,11 +91,11 @@ dir.create(dir.output, recursive=TRUE)
 #  1) Read in data =============================================================
 
 # DFA Trends (predictor)
-dat.dfa <- read_csv(file.path(dir.data, "pred_rec_std_aligned.csv"))
+dat.dfa <- read_csv(file.path(dir.data, "DFA_trends_recruit_data.csv"))
 head(dat.dfa)
 
 # Sablefish Recruitment Data (response)
-dat.rec <- read_csv(file.path(dir.data, "DFA_trends_recruit_data.csv"))
+dat.rec <- read_csv(file.path(dir.data, "pred_rec_std_aligned.csv"))
 head(dat.rec)
 
 # Join Data together
@@ -107,23 +114,38 @@ head(dat.comb)
 # Checkup
 # cv_norm_test <- sqrt(exp(dat.comb$sd_ln^2)-1) - Passed
 
-# 
+# Create trends objects
+
+if(n_trends==1) {
+  trends <- dat.comb$model1_state1
+  trends_se <- dat.comb$model1_state1_SE
+}else {
+  trends <- cbind(dat.comb$model2_state1, dat.comb$model2_state2)
+  trends_se <- cbind(dat.comb$model2_state1_SE, dat.comb$model2_state2_SE)
+}
+# Convert to numeriuc
+trends <- as.matrix(trends)
+trends_se <- as.matrix(trends_se)
+
+
+
+# Create Stan Input file
+stan.data <- list(
+  "n_year"=nrow(dat.comb),
+  "rec_ln"=dat.comb$rec_ln,
+  "sd_ln"=dat.comb$sd_ln,
+  
+  "n_trends"=n_trends,
+  "trends"=trends,
+  "trends_se"=trends_se
+)
 
 #  3) Function to Generate Initial Values ======================================
 # Initialization Function
 init_fn <- function(chain_id=1) {
   list( 
-    "scale" = runif(1, 1e3, 3e4),
-    "scale_hist" = runif(nYearPM, 1e4, 3e4),
-    "muDay" = rnorm(1,prior.muDay.mean,1),
-    "sigmaDay" = rnorm(1,prior.sigmaDay.mean,1),
-    "muDay_hist" = rnorm(nYearPM,prior.muDay.mean,1),
-    "sigmaDay_hist" = rnorm(nYearPM,prior.sigmaDay.mean,1),
-    "sigmaOE"=runif(1,0.5,1),
-    "sigmaOE_hist"=runif(nYearPM,0.5,1),
-    "prop_logis_pm"=runif(1,quantile(ce.props$prop.bay$prop, probs=0.25), 
-                          quantile(ce.props$prop.bay$prop, probs=0.25)),
-    "int_saa"=runif(n=1, min=min(Robs_saa), max=max(Robs_saa))
+    "sigma_oe"=runif(1,0,1),
+    "slp"=rnorm(n_trends, 0, 1)
   )
 }
 # init_fn()
@@ -136,11 +158,7 @@ stan.fit <- NULL
 if(fit==TRUE) {
   stan.fit <- stan(file=file.path(dir.stan, paste0("sablefish-ss-reg-v", version, ".stan")),
                    model_name=paste0("sablefish-ss-reg-v", version),
-                   data=list(
-                     "n_years"=n_years,
-                     "rec_ln"=,
-                     ""=
-                   ),
+                   data=stan.data,
                    chains=n.chains, iter=n.iter, thin=n.thin,
                    # chains=3, iter=5e3, thin=5,
                    cores=n.chains, verbose=FALSE,
