@@ -1,18 +1,31 @@
 // State-space Regression for Sablefish Indicator
 
 data {
-  int<lower=0> N;
-  vector[N] y;
+  int<lower=0> n_year;
+  vector[n_year] rec_ln;
+  vector[n_year] sd_ln;
+  
+  int<lower=0> n_trends;
+  matrix[n_year, n_trends] trends;
+  matrix[n_year, n_trends] trends_se;
 }
 
 
 parameters {
-  real mu;
-  real<lower=0> sigma;
+  // Regression Parameters
+  real incpt;
+  real slp[n_trends];
+  
+  // Estimated trend
+  vector[n_trends] real[n_year] pred_trends;
+  
+  
 }
 
 
 model {
-  y ~ normal(mu, sigma);
+  
+  
+  
 }
 
