@@ -47,7 +47,11 @@ model {
   // Observation Model
   rec_ln ~ normal(pred_rec_ln, sd_ln);
   // Process Model
-  
+  for(t in 1:n_trends) {
+    for(y in 1:n_year) {
+      trends[y,t] ~ normal(pred_trends[y,t], trends_se[y,t]);
+    } // next y
+  } // next t
   
 }
 
