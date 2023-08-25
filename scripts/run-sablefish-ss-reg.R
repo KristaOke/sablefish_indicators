@@ -107,9 +107,11 @@ head(dat.comb)
 # Calculate CV (normal space)
 dat.comb <- dat.comb %>% mutate("cv_norm"=std.dev/pred_rec,
                                 "sd_ln"=sqrt(log(cv_norm^2 + 1)),
-                                "rec_ln"=log(pred_rec))
+                                "rec_ln"=log(pred_rec)) %>% 
+                         dplyr::filter(!is.na(rec_ln))
 
 head(dat.comb)
+tail(dat.comb)
 
 # Checkup
 # cv_norm_test <- sqrt(exp(dat.comb$sd_ln^2)-1) - Passed
@@ -144,7 +146,7 @@ stan.data <- list(
 # Initialization Function
 init_fn <- function(chain_id=1) {
   list( 
-    "sigma_oe"=runif(1,0,1),
+    "incpt"=rnorm(n=1, mean=mean(dat.comb$rec_ln), sd=sd(dat.comb$rec_ln)),
     "slp"=rnorm(n_trends, 0, 1)
   )
 }
