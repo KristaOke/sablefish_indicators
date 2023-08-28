@@ -15,6 +15,7 @@ parameters {
   // Regression Parameters
   real incpt;  // Intercept
   real slp[n_trends]; // Slope coefficients
+  // vector[n_trends] slp;
   
   // Estimated trend
   // matrix[n_year, n_trends] pred_trends;
@@ -25,14 +26,15 @@ parameters {
 transformed parameters {
   vector[n_year] pred_rec_ln;
   
-  real temp_eff;
-  temp_eff=0.0;
+  vector[n_year] temp_eff; // Temporary additive effect of DFA trends
+  
   
   for(y in 1:n_year) {
+    temp_eff[y]=0.0;
     for(t in 1:n_trends) {
-      temp_eff += slp[t]*pred_trends[y,t];
+      temp_eff[y] += slp[t]*pred_trends[y,t];
     } // next t
-    pred_rec_ln[y] = incpt + temp_eff;
+    pred_rec_ln[y] = incpt + temp_eff[y];
   } // next y
   
 }
