@@ -70,15 +70,12 @@ if(mod=="model1") {
   n_trends <- 2
 }
 
-# Do we fit the model, or just load saved .rds outputs
+# Do we fit the model, or just load saved .rds outputs?
 fit <- TRUE 
-
-# Use Brood table data as runsize target (TRUE), or use total CE as runsize target (FALSE)
-run.target.bt <- TRUE 
 
 # MCMC Parameters
 n.chains <- 3
-n.iter <- 2e3
+n.iter <- 2e4
 n.thin <- 2
 
 # Update figure and output directories
@@ -165,8 +162,8 @@ if(fit==TRUE) {
                    # chains=3, iter=5e3, thin=5,
                    cores=n.chains, verbose=FALSE,
                    seed=101,
-                   control = list(adapt_delta = 0.99),
-                   init=init_ll)
+                   control = list(adapt_delta = 0.99))
+                   # init=init_ll)
   # Save Model Fit
   saveRDS(stan.fit, file.path(dir.output, paste0(,".rds")))
 
@@ -174,8 +171,19 @@ if(fit==TRUE) {
   stan.fit <- readRDS(file.path(dir.output, paste0(, ".rds")))
 }
 
-
+# Extract parameters as a list object
 pars <- rstan::extract(stan.fit)
 
 
 #  5) Plot Results =============================================================
+
+plotPost(pars$incpt)
+plotPost(pars$slp)
+
+# Plot Observed vs Predicted
+
+fit.df <- comb.dat
+
+# Plot Predicted DFA Trends vs. Observed
+
+
