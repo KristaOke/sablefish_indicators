@@ -34,7 +34,7 @@ require(dplyr)
 require(tidybayes)
 require(loo)
 require(here)
-
+require(yardstick)
 
 # CURRENTLY NEEDED WITH NEW R FOR PARALLELIZATION
 # if (Sys.getenv("RSTUDIO") == "1" && !nzchar(Sys.getenv("RSTUDIO_TERM")) && 
@@ -60,7 +60,7 @@ dir.data <- file.path(wd,"data")
 version <- 1 
 
 # Model Name
-mod <- c("model1", "model2")[1]
+mod <- c("model1", "model2")[2]
 mod.name <- paste0(mod, "_", "v", version)
 
 # Determine number of DFA trends to fit
@@ -165,10 +165,10 @@ if(fit==TRUE) {
                    control = list(adapt_delta = 0.99))
                    # init=init_ll)
   # Save Model Fit
-  saveRDS(stan.fit, file.path(dir.output, paste0(,".rds")))
+  saveRDS(stan.fit, file.path(dir.output, paste0("stan.fit.rds")))
 
 }else {
-  stan.fit <- readRDS(file.path(dir.output, paste0(, ".rds")))
+  stan.fit <- readRDS(file.path(dir.output, paste0("stan.fit.rds")))
 }
 
 # Extract parameters as a list object
@@ -177,13 +177,121 @@ pars <- rstan::extract(stan.fit)
 
 #  5) Plot Results =============================================================
 
-plotPost(pars$incpt)
-plotPost(pars$slp)
 
-# Plot Observed vs Predicted
+# Plot: Observed vs Predicted ==================================================
 
-fit.df <- comb.dat
+# Calculate quantiles of distribution of predicted ln rec
+pred.mat <- apply(pars$pred_rec_ln, 2, quantile, probs=c(0.975, 0.75, 0.5, 0.25, 0.025))
 
-# Plot Predicted DFA Trends vs. Observed
+years <- dat.comb$Year
+n.years <- length(years)
+
+y.lim <- c(min(pred.mat, dat.comb$rec_ln - 1.96*dat.comb$sd_ln),
+           max(pred.mat, dat.comb$rec_ln + 1.96*dat.comb$sd_ln))
+
+pdf(file=file.path(dir.figs, "Model Fit.pdf"), height=5, width=7)
+
+# plot(rec_ln~Year, data=dat.comb, type='l', col="blue", ylim=y.lim,
+#        ylab="Natural Log of Recruitment", main="Alaska Sablefish")
+# points(rec_ln~Year, data=dat.comb, pch=21, bg="blue")
+
+plot(rec_ln~Year, data=dat.comb, type='p', bg="blue", pch=21, ylim=y.lim,
+     ylab="Natural Log of Recruitment", main="Alaska Sablefish")
+
+# Add errorbars for 95% CI
+
+segments(x0=years, y0=dat.comb$rec_ln, 
+           x1=years, y1=dat.comb$rec_ln - 1.96*dat.comb$sd_ln,
+           col='blue')
+segments(x0=years, y0=dat.comb$rec_ln, 
+           x1=years, y1=dat.comb$rec_ln + 1.96*dat.comb$sd_ln,
+           col='blue')
 
 
+# Plot Model predicted ln rec
+polygon(x=c(years, rev(years)), y=c(pred.mat['97.5%',], rev(pred.mat['2.5%',])),
+          col=rgb(1,0,0, alpha=0.25), border=FALSE)
+polygon(x=c(years, rev(years)), y=c(pred.mat['75%',], rev(pred.mat['25%',])),
+        col=rgb(1,0,0, alpha=0.25), border=FALSE)
+lines(x=years, y=pred.mat['50%',], col=rgb(1,0,0, alpha=0.5))
+
+dev.off()
+
+# Plot: Predicted DFA Trends vs. Observed ======================================
+
+n_trends
+
+pdf(file=file.path(dir.figs, "Fit to Trends.pdf"), height=ifelse(n_trends==1, 5, 7), width=6)
+
+par(mfrow=c(n_trends,1))
+# plot(rec_ln~Year, data=dat.comb, type='l', col="blue", ylim=y.lim,
+#        ylab="Natural Log of Recruitment", main="Alaska Sablefish")
+# points(rec_ln~Year, data=dat.comb, pch=21, bg="blue")
+t <- 1
+for(t in 1:n_trends) {
+  # Calculate quantiles of distribution of predicted ln rec
+  trends.mat <- apply(pars$pred_trends, 2, quantile, probs=c(0.975, 0.75, 0.5, 0.25, 0.025))
+  
+  # Determine y limit
+  y.lim <- c(min(trends.mat, trends[,t] - 2*trends_se[,t]),
+             max(trends.mat, trends[,t] + 2*trends_se[,t]))
+  
+  plot(x=years, y=trends[,t], type='p', bg="blue", pch=21, ylim=y.lim,
+      ylab=paste("DFA Trend", t), main="Alaska Sablefish")
+
+  # Add errorbars for 95% CI
+  # y <- 1
+  # for(y in 1:n.years) {
+    segments(x0=years, y0=trends[,t], 
+             x1=years, y1=trends[,t] - 2*trends_se[,t],
+             col='blue')
+    segments(x0=years, y0=trends[,t], 
+             x1=years, y1=trends[,t] +2*trends_se[,t],
+             col='blue')
+  # }
+
+  # Plot Model predicted ln rec
+  polygon(x=c(years, rev(years)), y=c(trends.mat['97.5%',], rev(trends.mat['2.5%',])),
+          col=rgb(1,0,0, alpha=0.25), border=FALSE)
+  polygon(x=c(years, rev(years)), y=c(trends.mat['75%',], rev(trends.mat['25%',])),
+          col=rgb(1,0,0, alpha=0.25), border=FALSE)
+  lines(x=years, y=trends.mat['50%',], col=rgb(1,0,0, alpha=0.5))
+} # next t
+dev.off()
+
+# Plot: Intercept and Slopes
+pdf(file=file.path(dir.figs, "Parameters.pdf"), height=5, width=ifelse(n_trends==1, 5, 8))
+
+par(mfrow=c(1, n_trends+1), mar=c(5,2,2,1))
+
+plotPost(pars$incpt, xlab="Intercept", )
+
+t <- 1
+for(t in 1:n_trends) {
+  plotPost(pars$slp[,t], xlab=paste("Effect of Trend", t))
+}
+
+dev.off()
+
+# Plot: Observed vs Predicted on X-Y Axes ======================================
+
+# Calculate Performance metrics
+??yardstick::mape
+
+# Mean Absolute Percent Error
+temp.mape <- yardstick::mape_vec(truth=dat.comb$rec_ln, estimate=pred.mat['50%',])
+temp.rmse <- yardstick::rmse_vec(truth=dat.comb$rec_ln, estimate=pred.mat['50%',])
+
+pdf(file=file.path(dir.figs, "Predicted-Observed.pdf"), height=6, width=6)
+plot(x=dat.comb$rec_ln, y=pred.mat['50%',], pch=21, bg=rgb(0,0,1, alpha=0.25),
+       xlab="Observed ln(recruitment)",
+       ylab="Predicted ln(recruitment)",
+       main=paste("Alaska Sablefish:", n_trends, "Trends"))
+
+abline(a=0, b=1, col=rgb(1,0,0, alpha=0.5), lwd=3)
+
+legend("topleft", legend=c(paste("Mean Abs. % Error: ", round(temp.mape, 1), "%"),
+                           paste("Root Mean Squared Error: ", round(temp.rmse, 2))),
+       bty='n')
+
+dev.off()
