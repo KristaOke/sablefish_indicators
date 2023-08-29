@@ -46,6 +46,7 @@ vignettes/*.pdf
 
 # Ignore LARGE Stan output files
 output/*.rds
+*.rds
 
 # Ignore Data folder
 Data/*
