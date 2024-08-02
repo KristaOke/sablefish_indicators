@@ -15,6 +15,7 @@ require(viridis)
 require(corrplot)
 require(reshape2)
 library(car)
+library(cowplot)
 
 
 #=============================================================
@@ -150,7 +151,7 @@ scaled_dat <- dat %>% #group_by(Year) %>%
 
 #save
 write.csv(scaled_dat, file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""))
-
+scaled_dat <- read.csv(file=paste(wd,"/data/whole_dataset_scaled.csv", sep=""))
 
 
 #split data======
@@ -490,4 +491,114 @@ noncor3_long$type[which(noncor3_long$type=="smr_adult_cond_scaled")] <- "Summer 
     theme(legend.position = "NA") + geom_line() 
   expore.plot
   
+  covar.list$cat <- NA
+  
+  covar.list$cat[which(covar.list$type=="ann_heatwave_GOA_scaled",)] <- "Temperature"
+  covar.list$cat[which(covar.list$type=="Spr_ST_GOA_scaled",)] <- "Temperature"
+  covar.list$cat[which(covar.list$type=="Spr_ST_SEBS_scaled",)] <- "Temperature"
+  covar.list$cat[which(covar.list$type=="Smr_temp_250m_GOA_scaled",)] <- "Temperature"
+  covar.list$cat[which(covar.list$type=="Spr_chlA_biom_GOA_scaled",)] <- "Productivity"
+  covar.list$cat[which(covar.list$type=="Spr_chlA_biom_SEBS_scaled",)] <- "Productivity"
+  covar.list$cat[which(covar.list$type=="Spr_chlA_peak_GOA_scaled",)] <- "Productivity"
+  covar.list$cat[which(covar.list$type=="Spr_chlA_peak_SEBS_scaled",)] <- "Productivity"
+  covar.list$cat[which(covar.list$type=="ann_Copepod_size_EGOA_scaled",)] <- "Zooplankton"
+  covar.list$cat[which(covar.list$type=="ann_Copepod_size_WGOA_scaled",)] <- "Zooplankton"
+  covar.list$cat[which(covar.list$type=="Smr_euph_abun_Kod_scaled",)]   <- "Zooplankton"
+  covar.list$cat[which(covar.list$type=="YOY_grwth_Middleton_scaled",)] <- "YOY"
+  covar.list$cat[which(covar.list$type=="Smr_CPUE_juv_ADFG_ln_scaled",)] <- "Juvenile"
+  covar.list$cat[which(covar.list$type=="Smr_CPUE_juv_GOA_ln_scaled",)] <- "Juvenile"
+  covar.list$cat[which(covar.list$type=="Smr_condition_fem_age4_GOA_scaled",)] <- "Adult"
+  covar.list$cat[which(covar.list$type=="arrowtooth_biomass_scaled",)] <- "Adult"
+  covar.list$cat[which(covar.list$type=="sablefish_bycatch_arrowtooth_fishery_scaled",)]  <- "Adult"
+  covar.list$cat[which(covar.list$type=="smr_adult_cond_scaled",)] <- "Adult"
+  covar.list$cat[which(covar.list$type=="ln_rec",)] <- "Recruitment"
+  
+  expore.plot2 <- ggplot(covar.list, aes(x=Year, y=value, col=cat)) +
+   # geom_point() +
+    scale_fill_viridis(discrete=TRUE) +
+    facet_grid(~type, scales='free') +
+    #theme(legend.position = "NA") + 
+    geom_line() #+ theme(strip.background = element_blank(),  strip.text.x = element_blank())
+  
+  expore.plot2
+  
+  
+  
+  
+  covar.list$label <- NA
+  
+  covar.list$label[which(covar.list$type=="ann_heatwave_GOA_scaled",)] <- "Temperature - GOA heatwave index"
+  covar.list$label[which(covar.list$type=="Spr_ST_GOA_scaled",)] <- "Temperature - spring GOA SST"
+  covar.list$label[which(covar.list$type=="Spr_ST_SEBS_scaled",)] <- "Temperature - spring SEBS SST"
+  covar.list$label[which(covar.list$type=="Smr_temp_250m_GOA_scaled",)] <- "Temperature - summer GOA 250m"
+  covar.list$label[which(covar.list$type=="Spr_chlA_biom_GOA_scaled",)] <- "Productivity - spring GOA chlorophyll a biomass"
+  covar.list$label[which(covar.list$type=="Spr_chlA_biom_SEBS_scaled",)] <- "Productivity - spring SEBS chlorophyll a biomass"
+  covar.list$label[which(covar.list$type=="Spr_chlA_peak_GOA_scaled",)] <- "Productivity - spring GOA chlorophyll a peak"
+  covar.list$label[which(covar.list$type=="Spr_chlA_peak_SEBS_scaled",)] <- "Productivity - spring SEBS chlorophyll a peak"
+  covar.list$label[which(covar.list$type=="ann_Copepod_size_EGOA_scaled",)] <- "Zooplankton - EGOA Copepod community size"
+  covar.list$label[which(covar.list$type=="ann_Copepod_size_WGOA_scaled",)] <- "Zooplankton - WGOA Copepod community size"
+  covar.list$label[which(covar.list$type=="Smr_euph_abun_Kod_scaled",)]   <- "Zooplankton - spring Kodiak euphausiid abundance"
+  covar.list$label[which(covar.list$type=="YOY_grwth_Middleton_scaled",)] <- "YOY - growth at Middleton Is."
+  covar.list$label[which(covar.list$type=="Smr_CPUE_juv_ADFG_ln_scaled",)] <- "Juvenile - ADF&G surevy CPUE"
+  covar.list$label[which(covar.list$type=="Smr_CPUE_juv_GOA_ln_scaled",)] <- "Juvenile - GOA survey CPUE"
+  covar.list$label[which(covar.list$type=="Smr_condition_fem_age4_GOA_scaled",)] <- "Adult - condition age 4 females"
+  covar.list$label[which(covar.list$type=="arrowtooth_biomass_scaled",)] <- "Adult - arrowtooth biomass"
+  covar.list$label[which(covar.list$type=="sablefish_bycatch_arrowtooth_fishery_scaled",)]  <- "Adult - bycatch in arrowtooth fishery"
+  covar.list$label[which(covar.list$type=="smr_adult_cond_scaled",)] <- "Adult - summer condition"
+  covar.list$label[which(covar.list$type=="ln_rec",)] <- "Recruitment"
+
+  covar.list$labellong <- NA
+  
+  covar.list$labellong[which(covar.list$type=="ann_heatwave_GOA_scaled",)] <- "Heatwave index GOA"
+  covar.list$labellong[which(covar.list$type=="Spr_ST_GOA_scaled",)] <- "Spring SST GOA"
+  covar.list$labellong[which(covar.list$type=="Spr_ST_SEBS_scaled",)] <- "Spring SST SEBS"
+  covar.list$labellong[which(covar.list$type=="Smr_temp_250m_GOA_scaled",)] <- "Summer temperature 250m GOA"
+  covar.list$labellong[which(covar.list$type=="Spr_chlA_biom_GOA_scaled",)] <- "Spring chlorophyll a biomass GOA"
+  covar.list$labellong[which(covar.list$type=="Spr_chlA_biom_SEBS_scaled",)] <- "Spring chlorophyll a biomass SEBS"
+  covar.list$labellong[which(covar.list$type=="Spr_chlA_peak_GOA_scaled",)] <- "Spring chlorophyll a peak GOA"
+  covar.list$labellong[which(covar.list$type=="Spr_chlA_peak_SEBS_scaled",)] <- "Spring chlorophyll a peak SEBS"
+  covar.list$labellong[which(covar.list$type=="ann_Copepod_size_EGOA_scaled",)] <- "Copepod community size EGOA "
+  covar.list$labellong[which(covar.list$type=="ann_Copepod_size_WGOA_scaled",)] <- "Copepod community size WGOA"
+  covar.list$labellong[which(covar.list$type=="Smr_euph_abun_Kod_scaled",)]   <- "Summer Kodiak euphausiid abundance"
+  covar.list$labellong[which(covar.list$type=="YOY_grwth_Middleton_scaled",)] <- "Sablefish YOY growth at Middleton Is."
+  covar.list$labellong[which(covar.list$type=="Smr_CPUE_juv_ADFG_ln_scaled",)] <- "Juvenile CPUE nearshore GOAAI survey"
+  covar.list$labellong[which(covar.list$type=="Smr_CPUE_juv_GOA_ln_scaled",)] <- "Juvenile CPUE GOA bottom trawl survey"
+  covar.list$labellong[which(covar.list$type=="Smr_condition_fem_age4_GOA_scaled",)] <- "Summer condition age 4 females GOA"
+  covar.list$labellong[which(covar.list$type=="arrowtooth_biomass_scaled",)] <- "Arrowtooth biomass GOA"
+  covar.list$labellong[which(covar.list$type=="sablefish_bycatch_arrowtooth_fishery_scaled",)]  <- "Bycatch in arrowtooth fishery"
+  covar.list$labellong[which(covar.list$type=="smr_adult_cond_scaled",)] <- "Summer condition adult females"
+  covar.list$labellong[which(covar.list$type=="ln_rec",)] <- "Recruitment"
+  
+  
+  
+  
+  expore.plot3 <- ggplot(covar.list[which(covar.list$type!="ln_rec"),], aes(x=Year, y=value, col=cat)) +
+     geom_point(size=0.5) +
+    scale_fill_viridis(discrete=TRUE) +
+    facet_wrap(~label, #scales='free', 
+               ncol=3) + theme_bw()+
+    theme(legend.position = "NA") + 
+    geom_line() #+ theme(strip.background = element_blank(),  strip.text.x = element_blank())
+  expore.plot3
+  
+  expore.plot4 <- ggplot(covar.list[which(covar.list$type=="ln_rec"),], aes(x=Year, y=value)) +
+    geom_point(size=0.5) +
+    scale_fill_viridis(discrete=TRUE) +
+    facet_wrap(~label, #scales='free', 
+               ncol=3) + theme_bw() +
+    theme(legend.position = "NA") + 
+    geom_line() #+ theme(strip.background = element_blank(),  strip.text.x = element_blank())
+  expore.plot4
+  
+  expore.plot5 <- ggplot(covar.list[which(covar.list$type!="ln_rec"&
+                                            covar.list$type!="Smr_condition_fem_age4_GOA_scaled" ),], aes(x=Year, y=value)) +
+    geom_point(size=0.5) +
+    scale_fill_viridis(discrete=TRUE) +
+    facet_wrap(~labellong, #scales='free', 
+               ncol=2) + theme_bw()+
+    theme(legend.position = "NA") + 
+    geom_line() #+ theme(strip.background = element_blank(),  strip.text.x = element_blank())
+  expore.plot5
+
+  plot_grid(expore.plot4, expore.plot5, ncol=1, rel_heights = c(2,7))  
   
