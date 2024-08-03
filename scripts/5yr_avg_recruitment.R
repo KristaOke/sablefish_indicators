@@ -4,6 +4,10 @@
 #Created by Krista, 2023
 #============================================================================================================================================
 #Notes:
+# colours:
+# dark green, predicted "#1b9e77"
+# dark orange, long time series predicted "#d95f02"
+# purple, reduced time series predicted "#7570b3"
 #============================================================================================================================================
 
 #=============================================================
@@ -70,24 +74,24 @@ par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 dat.temp <- avgs_join
 
 plot(x=dat.temp$ln_rec, y=dat.temp$avg_prev_5yr_recruit,
-     xlab="Observed ln(Recruitment)", ylab="5yr avg ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Observed ln(recruitment)", ylab="5yr avg ln(recruitment)", pch=21, bg="#1b9e77",
+     main=paste("5-year rolling average"), ylim=c(0,5), xlim=c(0,5))
 # plot(x=plotwithin$fit, y=plotwithin$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+abline(a=0, b=1, col="dark grey", lwd=3)
 
 # Timeseries
 plot(x=dat.temp$Year, y=dat.temp$ln_rec,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("5-year rolling average"))
 grid(lty=3, col='dark gray')
-points(x=dat.temp$Year, y=dat.temp$ln_rec,
-       pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.temp$Year, y=dat.temp$avg_prev_5yr_recruit, lwd=3, col=rgb(0,0,1, alpha=0.5))
+# points(x=dat.temp$Year, y=dat.temp$ln_rec,
+#        pch=21, bg="black")
+lines(x=dat.temp$Year, y=dat.temp$avg_prev_5yr_recruit, lwd=3, col="#1b9e77")
 #points(x=dat.temp$Year, y=plotwithin$predicted,
 #      pch=21, bg=rgb(0,1,0,alpha=0.5))
 
-legend('topleft', legend=c("Observed","5yr avg"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
-                                                                 rgb(0,0,1, alpha=0.5)), bg="white")
+legend('topleft', legend=c("Observed","5yr avg"), lty=1, col=c("black",
+                                                               "#1b9e77"), bg="white")
 
 #comparison metrics-----
 

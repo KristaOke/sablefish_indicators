@@ -5,6 +5,10 @@
 #copied to edit from older scripts
 #============================================================================================================================================
 #Notes:
+# colours:
+# dark green, predicted "#1b9e77"
+# dark orange, long time series predicted "#d95f02"
+# purple, reduced time series predicted "#7570b3"
 #============================================================================================================================================
 library(ggplot2)
 library(reshape2)
@@ -265,12 +269,22 @@ proc_rot =  model.1$states
 mm <- 1 #4 processes
 
 rec_names <- rownames(z.mat1)
+
+rec_names <- c("GOA heatwave index", "spring SST GOA" ,                         
+               "spring SST SEBS " ,"summer temp. GOA 250m",                   
+               "GOA chl. a biomass" , "SEBS chl. a biomass" ,                 
+               "GOA chl. a peak", "SEBS chl. a peak",                  
+               "EGOA Copepod size" , "WGOA Copepod size",               
+               "YOY growth Middleton Is.", "GOAAI survey CPUE"  ,   
+               "GOA survey CPUE" , "bycatch arrowtooth fish.",
+               "summer condition")
+
 ylbl <- rec_names
 w_ts <- seq(dim(z.mat1)[2])
 layout(matrix(c(1, 2, 3, 4), mm, 2), widths = c(2, 1))
 ## par(mfcol=c(mm,2), mai=c(0.5,0.5,0.5,0.1), omi=c(0,0,0,0))
 # jpeg("figs/ugly_DFA_trends_loadings.jpg")
-par(mfcol=c(mm,2), mar = c(1.3,1.3,1.3,1.3), omi = c(0.1, 0.1, 0.1, 0.1))
+par(mfcol=c(mm,2), mar = c(2,2,2,1), omi = c(0, 0, 0, 0))
 ## plot the processes
 i<-1
 for (i in 1:mm) {
@@ -289,12 +303,12 @@ for (i in 1:mm) {
   axis(1, 1:47, yr_frst + 0:dim(z.mat1)[2])
 }
 ## plot the loadings
-clr <- c("brown", 
-         "blue", 
-         "darkgreen", 
-         "darkred", 
-         "purple", 
-         "darkorange")
+clr <- c("blue", "blue", "blue", "blue", 
+         "darkgreen", "darkgreen", "darkgreen", "darkgreen", 
+         "purple", "purple",
+         "darkblue", 
+         "darkorange", "darkorange", 
+         "red","red")
 minZ <- 0
 ylm <- c(-1, 1) * max(abs(Z_rot))
 for (i in 1:mm) {
@@ -464,12 +478,22 @@ proc_rot = solve(H_inv) %*% model.2$states
 mm <- 2 #processes
 
 rec_names <- rownames(z.mat1)
+
+rec_names <- c("GOA heatwave index", "spring SST GOA" ,                         
+               "spring SST SEBS " ,"summer temp. GOA 250m",                   
+               "GOA chl. a biomass" , "SEBS chl. a biomass" ,                 
+               "GOA chl. a peak", "SEBS chl. a peak",                  
+               "EGOA Copepod size" , "WGOA Copepod size",               
+               "YOY growth Middleton Is.", "GOAAI survey CPUE"  ,   
+               "GOA survey CPUE" , "bycatch arrowtooth fish.",
+               "summer condition")
+
 ylbl <- rec_names
 w_ts <- seq(dim(z.mat1)[2])
 layout(matrix(c(1, 2, 3, 4, 5, 6), mm, 2), widths = c(2, 1))
 ## par(mfcol=c(mm,2), mai=c(0.5,0.5,0.5,0.1), omi=c(0,0,0,0))
 # jpeg("figs/ugly_DFA_trends_loadings.jpg")
-par(mfcol=c(mm,2), mar = c(1,1,1,1), omi = c(0, 0, 0, 0))
+par(mfcol=c(mm,2), mar = c(2,2,2,1), omi = c(0, 0, 0, 0))
 ## plot the processes
 for (i in 1:mm) {
   ylm <- c(-1, 1) * max(abs(proc_rot[i, ]))
@@ -487,12 +511,12 @@ for (i in 1:mm) {
   axis(1, 1:47, yr_frst + 0:dim(z.mat1)[2])
 }
 ## plot the loadings
-clr <- c("brown", 
-         "blue", 
-         "darkgreen", 
-         "darkred", 
-         "purple", 
-         "darkorange")
+clr <- c("blue", "blue", "blue", "blue", 
+         "darkgreen", "darkgreen", "darkgreen", "darkgreen", 
+         "purple", "purple",
+         "darkblue", 
+         "darkorange", "darkorange", 
+         "red","red")
 minZ <- 0
 ylm <- c(-1, 1) * max(abs(Z_rot))
 for (i in 1:mm) {
@@ -860,6 +884,43 @@ ggplot(model2_reg_dat, aes(Smr_CPUE_juv_ADFG_ln_scaled, ln_rec)) + geom_point() 
 
 ggplot(model2_reg_dat, aes(sablefish_bycatch_arrowtooth_fishery_scaled, ln_rec)) + geom_point() + geom_smooth()
 
+#plot within quickmod2=====
+
+predquick2 <- predict(quickmod2, newdata=model2_reg_dat)
+quick2pred <- model2_reg_dat
+quick2pred$predicted_ln_recruit <- predquick2
+quick2pred$observed_ln_recruit <- quick2pred$ln_rec
+
+#repeat same plot as within-----
+par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
+
+# Omit NAs
+dat.temp <- quick2pred
+
+plot(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#1b9e77",
+     main=paste("DFA + regression"), ylim=c(0,5), xlim=c(0,5))
+# plot(x=pred.bas$fit, y=pred.bas$Ybma) 
+abline(a=0, b=1, col="dark grey", lwd=3)
+# points(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
+#        pch=21, bg=rgb(0,1,0.5,alpha=0.5))
+
+# Timeseries
+plot(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("DFA + regression"), ylim=c(0,5), xlim=c(1975,2021))
+grid(lty=3, col='dark gray')
+ # points(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
+ #        pch=21, bg="black")
+lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col="#1b9e77")
+#lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,1,0.5, alpha=0.5))
+ # points(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit,
+ #        pch=21, bg=rgb(0,1,0,alpha=0.5))
+
+
+
+
 
 #join trends from diff models and save for state space====
 
@@ -1016,6 +1077,8 @@ quick2_rmse96 <- rmse(quick2_df[which(quick2_df$Year>1995),], truth=observed_ln_
 quick2_mae96 <- mae(quick2_df[which(quick2_df$Year>1995),], truth=observed_ln_recruit, 
                     estimate=predicted_ln_recruit, na.rm=TRUE)
 
+write.csv(quick2_df, file="DFA_2ndbest_obs_pred.csv")
+
 #repeat same plot as within-----
 par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 
@@ -1023,21 +1086,22 @@ par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 dat.temp <- quick1_df
 
 plot(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#1b9e77",
+     main=paste("DFA + regression"), ylim=c(0,5), xlim=c(0,5))
 # plot(x=pred.bas$fit, y=pred.bas$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+abline(a=0, b=1, col="dark grey", lwd=3)
 # points(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
 #        pch=21, bg=rgb(0,1,0.5,alpha=0.5))
 
 # Timeseries
 plot(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"), ylim=c(0,5), xlim=c(1975,2021))
+     xlab="Year", ylab="ln(Recruitment)", type='l', col="black",
+     main=paste("DFA + regression"), ylim=c(0,5), xlim=c(1975,2021))
 grid(lty=3, col='dark gray')
 # points(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
 #        pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,0,1, alpha=0.5))
+lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col="#1b9e77")
 #lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,1,0.5, alpha=0.5))
 # points(x=dat.temp$Year, y=output_df$predicted_ln_recruit,
 #        pch=21, bg=rgb(0,1,0,alpha=0.5))
@@ -1051,21 +1115,22 @@ par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 dat.temp <- quick2_df
 
 plot(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#1b9e77",
+     main=paste("DFA + regression"), ylim=c(0,5), xlim=c(0,5))
 # plot(x=pred.bas$fit, y=pred.bas$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+abline(a=0, b=1, col="dark grey", lwd=3)
 # points(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
 #        pch=21, bg=rgb(0,1,0.5,alpha=0.5))
 
 # Timeseries
 plot(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"), ylim=c(0,5), xlim=c(1975,2021))
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("DFA + regression"), ylim=c(0,5), xlim=c(1975,2021))
 grid(lty=3, col='dark gray')
 # points(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
 #        pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,0,1, alpha=0.5))
+lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col="#1b9e77")
 #lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,1,0.5, alpha=0.5))
 # points(x=dat.temp$Year, y=output_df$predicted_ln_recruit,
 #        pch=21, bg=rgb(0,1,0,alpha=0.5))

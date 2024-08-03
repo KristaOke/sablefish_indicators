@@ -7,7 +7,10 @@
 #
 #==================================================================================================
 #NOTES:
-#
+# colours:
+# dark green, predicted "#1b9e77"
+# dark orange, long time series predicted "#d95f02"
+# purple, reduced time series predicted "#7570b3"
 #==================================================================================================
 #TIMING:
 #
@@ -111,31 +114,33 @@ summary(bas.lm)
 #pdf(file.path(dir.figs,"Model Fit.pdf"), height=6, width=9)
 par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 pred.bas <- predict(bas.lm, estimator="BMA", se.fit=T)
+pred.bas.reduced <- predict(bas.lm, estimator="BMA", se.fit=T)
 
 # Omit NAs
 dat.temp.na.omit <- na.omit(scaled_bas_dat[-which(names(scaled_bas_dat) %in% c("Smr_temp_250m_GOA_scaled"))])
 
 plot(x=dat.temp.na.omit$ln_rec, y=pred.bas$Ybma,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#1b9e77",
+     main=paste("BAS"), ylim=c(0,5), xlim=c(0,5))
 # plot(x=pred.bas$fit, y=pred.bas$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+abline(a=0, b=1, col="dark grey", lwd=3)
 
 # Timeseries
 plot(x=dat.temp.na.omit$Year, y=dat.temp.na.omit$ln_rec,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("BAS"))
 grid(lty=3, col='dark gray')
 points(x=dat.temp.na.omit$Year, y=dat.temp.na.omit$ln_rec,
-       pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.temp.na.omit$Year, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
+       pch=21, bg="black")
+lines(x=dat.temp.na.omit$Year, y=pred.bas$Ybma, lwd=3, col="#1b9e77")
 points(x=dat.temp.na.omit$Year, y=pred.bas$Ybma,
-       pch=21, bg=rgb(0,1,0,alpha=0.5))
+       pch=21, bg="#1b9e77")
 #conf_int <- confint(pred.bas, parm = "pred")
 #plotCI(x=dat.temp.na.omit$Year, y=pred.bas$Ybma,li=conf_int[,1], ui=conf_int[,2])
 
-legend('topleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
-                                                             rgb(0,0,1, alpha=0.5)), bg="white")
+legend('topleft', legend=c("Assessment model estimated","Predicted"), lty=1, col=c("black",
+                                                             "#1b9e77"), bg="white")
 
 dev.off()
 
@@ -190,10 +195,9 @@ plot.df$bas.names[which(plot.df$bas.names=="Spr_chlA_biom_SEBS_scaled")] <- "Spr
 plot.df$bas.names[which(plot.df$bas.names=="Spr_chlA_peak_GOA_scaled")] <- "Spring chlorophyll A peak GOA"
 plot.df$bas.names[which(plot.df$bas.names=="Spr_chlA_peak_SEBS_scaled")] <- "Spring chlorophyll A peak SEBS"
 plot.df$bas.names[which(plot.df$bas.names=="ann_Copepod_size_EGOA_scaled")] <- "Annual copepod community size EGOA"
-plot.df$bas.names[which(plot.df$bas.names=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
-plot.df$bas.names[which(plot.df$bas.names=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
-plot.df$bas.names[which(plot.df$bas.names=="smr_adult_cond_scaled")] <- "Summer adult condition"
-
+plot.df$bas.names[which(plot.df$bas.names=="YOY_grwth_Middleton_scaled")] <- "YOY growth at Middleton Is."
+plot.df$bas.names[which(plot.df$bas.names=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "CPUE juveniles nearshore GOAAI survey"
+plot.df$bas.names[which(plot.df$bas.names=="smr_adult_cond_scaled")] <- "Summer adult female condition"
 
 
 
@@ -319,6 +323,7 @@ plot(bas.lm, which=4)
 #pdf(file.path(dir.figs,"Model Fit.pdf"), height=6, width=9)
 par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 pred.bas <- predict(bas.lm, estimator="BMA")
+pred.bas.long <- predict(bas.lm, estimator="BMA")
 
 # Omit NAs
 #dat.temp.na.omit <- na.omit(scaled_bas_dat[-which(names(scaled_bas_dat) %in% c("Smr_temp_250m_GOA_scaled", "Smr_condition_fem_age4_GOA_scaled"))])
@@ -326,22 +331,23 @@ dat.temp.na.omit <- na.omit(scaled_bas_dat[which(names(scaled_bas_dat) %in% c("Y
 
 
 plot(x=dat.temp.na.omit$ln_rec, y=pred.bas$Ybma,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#1b9e77",
+     main=paste("BAS"), ylim=c(0,5), xlim=c(0,5))
 # plot(x=pred.bas$fit, y=pred.bas$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+abline(a=0, b=1, col="dark grey", lwd=3)
 
 # Timeseries
 plot(x=dat.temp.na.omit$Year, y=dat.temp.na.omit$ln_rec,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("BAS"))
 grid(lty=3, col='dark gray')
 points(x=dat.temp.na.omit$Year, y=dat.temp.na.omit$ln_rec,
-       pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.temp.na.omit$Year, y=pred.bas$Ybma, lwd=3, col=rgb(0,0,1, alpha=0.5))
+       pch=21, bg="black")
+lines(x=dat.temp.na.omit$Year, y=pred.bas$Ybma, lwd=3, col="#1b9e77")
 
-legend('top', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
-                                                             rgb(0,0,1, alpha=0.5)), bg="white")
+legend('top', legend=c("Assessment model estimated","Predicted"), lty=1, col=c("black",
+                                                             "#1b9e77"), bg="white")
 
 dev.off()
 
@@ -393,9 +399,9 @@ plot.df$bas.names[which(plot.df$bas.names=="Spr_chlA_biom_SEBS_scaled")] <- "Spr
 plot.df$bas.names[which(plot.df$bas.names=="Spr_chlA_peak_GOA_scaled")] <- "Spring chlorophyll A peak GOA"
 plot.df$bas.names[which(plot.df$bas.names=="Spr_chlA_peak_SEBS_scaled")] <- "Spring chlorophyll A peak SEBS"
 plot.df$bas.names[which(plot.df$bas.names=="ann_Copepod_size_EGOA_scaled")] <- "Annual copepod community size EGOA"
-plot.df$bas.names[which(plot.df$bas.names=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
-plot.df$bas.names[which(plot.df$bas.names=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
-plot.df$bas.names[which(plot.df$bas.names=="smr_adult_cond_scaled")] <- "Summer adult condition"
+plot.df$bas.names[which(plot.df$bas.names=="YOY_grwth_Middleton_scaled")] <- "YOY growth at Middleton Is."
+plot.df$bas.names[which(plot.df$bas.names=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "CPUE juveniles nearshore GOAAI survey"
+plot.df$bas.names[which(plot.df$bas.names=="smr_adult_cond_scaled")] <- "Summer adult female condition"
 
 
 
@@ -483,6 +489,52 @@ g2.b
 # Bring Figs Together ========
 g3.b <- plot_grid(g.b,g2.b, nrow=1, ncol=2, rel_widths=c(3,1), align='h')
 g3.b #+ ggtitle('Sablefish Recruitment', subtitle=paste('Rsq:',round(,2)))
+
+
+#Plot within long and reduced together============================================
+
+
+#pdf(file.path(dir.figs,"Model Fit.pdf"), height=6, width=9)
+par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
+#pred.bas <- predict(bas.lm, estimator="BMA", se.fit=T)
+
+# Omit NAs
+dat.temp.na.omit.red <- na.omit(scaled_bas_dat[-which(names(scaled_bas_dat) %in% c("Smr_temp_250m_GOA_scaled"))])
+dat.temp.na.omit <- na.omit(scaled_bas_dat[which(names(scaled_bas_dat) %in% c("Year", "ln_rec", covars))])
+
+
+plot(x=dat.temp.na.omit$ln_rec, y=pred.bas.long$Ybma,
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#d95f02",
+main=paste("BAS"), ylim=c(0,5), xlim=c(0,5))
+# plot(x=pred.bas$fit, y=pred.bas$Ybma) 
+abline(a=0, b=1, col="dark grey", lwd=3)
+points(x=dat.temp.na.omit.red$ln_rec, y=pred.bas.reduced$Ybma,
+       pch=21, bg="#7570b3")
+# points(x=pred.bas.long$Ypred, y=pred.bas.long$Ybma,
+#        pch=21, bg="#7570b3")
+
+# Timeseries
+plot(x=dat.temp.na.omit$Year, y=dat.temp.na.omit$ln_rec,
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("BAS"))
+grid(lty=3, col='dark gray')
+# points(x=dat.temp.na.omit$Year, y=dat.temp.na.omit$ln_rec,
+#        pch=21, bg="black")
+lines(x=dat.temp.na.omit.red$Year, y=pred.bas.reduced$Ybma, lwd=3, col="#7570b3")
+# points(x=dat.temp.na.omit.red$Year, y=pred.bas.reduced$Ybma,
+#        pch=21, bg="#7570b3")
+lines(x=dat.temp.na.omit$Year, y=pred.bas.long$Ybma, lwd=3, col="#d95f02")
+# points(x=dat.temp.na.omit$Year, y=pred.bas.long$Ybma,
+#        pch=21, bg="#d95f02")
+#conf_int <- confint(pred.bas, parm = "pred")
+#plotCI(x=dat.temp.na.omit$Year, y=pred.bas$Ybma,li=conf_int[,1], ui=conf_int[,2])
+
+legend('topleft', legend=c("Assessment model estimated","Predicted"), lty=1, col=c("black",
+                                                                                   "#1b9e77"), bg="white")
+
+dev.off()
+
 
 
 
@@ -674,22 +726,23 @@ par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 dat.temp <- output_df_long
 
 plot(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#d95f02",
+     main=paste("BAS"), ylim=c(0,5), xlim=c(0,5))
 # plot(x=pred.bas$fit, y=pred.bas$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+abline(a=0, b=1, col="dark grey", lwd=3)
 points(x=dat.temp$observed_ln_recruit, y=output_df_reduced$predicted_ln_recruit,
-       pch=21, bg=rgb(0,1,0.5,alpha=0.5))
+       pch=21, bg="#7570b3")
 
 # Timeseries
 plot(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"), ylim=c(0,5), xlim=c(1975,2021))
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("BAS"), ylim=c(0,5), xlim=c(1975,2021))
 grid(lty=3, col='dark gray')
 # points(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
 #        pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,0,1, alpha=0.5))
-lines(x=dat.temp$Year, y=output_df_reduced$predicted_ln_recruit, lwd=3, col=rgb(0,1,0.5, alpha=0.5))
+lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col="#d95f02")
+lines(x=dat.temp$Year, y=output_df_reduced$predicted_ln_recruit, lwd=3, col="#7570b3")
 # points(x=dat.temp$Year, y=output_df$predicted_ln_recruit,
 #        pch=21, bg=rgb(0,1,0,alpha=0.5))
 

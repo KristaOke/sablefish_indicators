@@ -5,6 +5,10 @@
 #borrowing heavily from code written by Curry
 #============================================================================================================================================
 #Notes:
+# colours:
+# dark green, predicted "#1b9e77"
+# dark orange, long time series predicted "#d95f02"
+# purple, reduced time series predicted "#7570b3"
 #============================================================================================================================================
 
 require(tidyverse)
@@ -169,12 +173,14 @@ finalbrt <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
                                   n.minobsinnode=3,
                                   n.folds = 5,
                                   max.trees = 50000)
-
+saveRDS(finalbrt, file="BRT_model_reduced_series.RDS")
+finalbrt <- readRDS(file="BRT_model_reduced_series.RDS")
 plot(finalbrt$fitted, finalbrt$residuals)
 finalbrt$cv.statistics
 gbm.plot(finalbrt)
 gbm.plot.fits(finalbrt)
 gbm.perspec(finalbrt, x=1, y=9, theta = 45, phi=10) #
+gbm.perspec(finalbrt, x=1, y=9, theta = 45, phi=10, x.label= "SEBS spring SST", y.label = "CPUE juveniles GOAAI nearshore survey") 
 summary(finalbrt)
 gbm.simplify(finalbrt, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
 gbm.interactions(finalbrt) #
@@ -188,9 +194,9 @@ dev_ex <- (total_dev-finalbrt$cv.statistics$deviance.mean)/total_dev
 summary_out <- summary(finalbrt)
 
 summary_out$var[which(summary_out$var=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
-summary_out$var[which(summary_out$var=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
-summary_out$var[which(summary_out$var=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
-summary_out$var[which(summary_out$var=="smr_adult_cond_scaled")] <- "Summer adult condition"
+summary_out$var[which(summary_out$var=="YOY_grwth_Middleton_scaled")] <- "YOY growth at Middleton Is."
+summary_out$var[which(summary_out$var=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "CPUE juveniles nearshore GOAAI survey"
+summary_out$var[which(summary_out$var=="smr_adult_cond_scaled")] <- "Summer adult female condition"
 summary_out$var[which(summary_out$var=="Smr_temp_250m_GOA_scaled")] <- "Summer 250m temperature GOA"
 summary_out$var[which(summary_out$var=="Spr_chlA_biom_GOA_scaled")] <- "Spring chlorophyll A biomass GOA"
 summary_out$var[which(summary_out$var=="Spr_chlA_biom_SEBS_scaled")] <- "Spring chlorophyll A biomass SEBS"
@@ -209,6 +215,9 @@ withinpred <- predict.gbm(finalbrt, scaled_brt_dat[which(scaled_brt_dat$Year>198
 plotwithin <- scaled_brt_dat[which(scaled_brt_dat$Year>1980),]
 plotwithin$predicted <- withinpred
 
+withinpred_reduced <- withinpred
+plotwithin_reduced <- plotwithin
+
 ggplot(plotwithin, aes(Year, ln_rec)) + geom_point(aes(col="red")) + 
   geom_line() + geom_point(aes(Year, predicted)) + geom_line(aes(Year, predicted)) + theme_bw()
 
@@ -222,24 +231,25 @@ par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 dat.temp <- plotwithin
 
 plot(x=dat.temp$ln_rec, y=plotwithin$predicted,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#1b9e77",
+     main=paste("BRT"), ylim=c(0,5), xlim=c(0,5))
 # plot(x=plotwithin$fit, y=plotwithin$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+abline(a=0, b=1, col="dark grey", lwd=3)
 
 # Timeseries
 plot(x=dat.temp$Year, y=dat.temp$ln_rec,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("BRT"))
 grid(lty=3, col='dark gray')
 points(x=dat.temp$Year, y=dat.temp$ln_rec,
-       pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.temp$Year, y=plotwithin$predicted, lwd=3, col=rgb(0,0,1, alpha=0.5))
+       pch=21, bg="black")
+lines(x=dat.temp$Year, y=plotwithin$predicted, lwd=3, col="#1b9e77")
 #points(x=dat.temp$Year, y=plotwithin$predicted,
 #      pch=21, bg=rgb(0,1,0,alpha=0.5))
 
-legend('topleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
-                                                                 rgb(0,0,1, alpha=0.5)), bg="white")
+legend('topleft', legend=c("Assessment model estimated","Predicted"), lty=1, col=c("black",
+                                                                                   "#1b9e77"), bg="white")
 
 
 
@@ -344,13 +354,17 @@ finalbrt <- gbm.step(gbm.y=res1, gbm.x=fit.covars,
                      n.minobsinnode=3,
                      n.folds = 5,
                      max.trees = 50000)
-
+saveRDS(finalbrt, file="BRT_model_long_series.RDS")
+finalbrt <- readRDS(file="BRT_model_long_series.RDS")
 
 plot(finalbrt$fitted, finalbrt$residuals)
 finalbrt$cv.statistics
 gbm.plot(finalbrt)
 gbm.plot.fits(finalbrt)
 gbm.perspec(finalbrt, x=1, y=3, theta = 45, phi=10, z.range=c(0,4)) #
+gbm.perspec(finalbrt, x=1, y=3, theta = 45, phi=10, z.range=c(0,4), 
+            x.label= "SEBS spring SST", 
+            y.label = "CPUE juveniles GOAAI nearshore survey") 
 summary(finalbrt)
 gbm.simplify(finalbrt, n.drops = 3) #error that nTrain * bag.fraction <= n.minobsinnode` but it is not!!
 gbm.interactions(finalbrt) #interaction between SST and CPUE ADFG
@@ -363,9 +377,9 @@ dev_ex <- (total_dev-finalbrt$cv.statistics$deviance.mean)/total_dev
 summary_out <- summary(finalbrt)
 
 summary_out$var[which(summary_out$var=="Spr_ST_SEBS_scaled")] <- "Spring SST SEBS"
-summary_out$var[which(summary_out$var=="YOY_grwth_Middleton_scaled")] <- "YOY growth Middleton Is. seabirds"
-summary_out$var[which(summary_out$var=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "Summer juvenile CPUE ADFG survey"
-summary_out$var[which(summary_out$var=="smr_adult_cond_scaled")] <- "Summer adult condition"
+summary_out$var[which(summary_out$var=="YOY_grwth_Middleton_scaled")] <- "YOY growth at Middleton Is."
+summary_out$var[which(summary_out$var=="Smr_CPUE_juv_ADFG_ln_scaled")] <- "CPUE juveniles nearshore GOAAI survey"
+summary_out$var[which(summary_out$var=="smr_adult_cond_scaled")] <- "Summer adult female condition"
 
 
 ggplot(summary_out, aes(rel.inf, var)) + geom_col(fill="blue") + theme_bw() + ylab("Indicator") +
@@ -376,6 +390,9 @@ ggplot(summary_out, aes(rel.inf, var)) + geom_col(fill="blue") + theme_bw() + yl
 withinpred <- predict.gbm(finalbrt, scaled_brt_dat[which(scaled_brt_dat$Year>1980),c(3:12)], n.trees = 8121)
 plotwithin <- scaled_brt_dat[which(scaled_brt_dat$Year>1980),]
 plotwithin$predicted <- withinpred
+
+withinpred_long <- withinpred
+plotwithin_long <- plotwithin
 
 ggplot(plotwithin, aes(Year, ln_rec)) + geom_point(aes(col="red")) + 
   geom_line() + geom_point(aes(Year, predicted)) + geom_line(aes(Year, predicted)) + theme_bw()
@@ -390,25 +407,67 @@ par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 dat.temp <- plotwithin
 
 plot(x=dat.temp$ln_rec, y=plotwithin$predicted,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#1b9e77",
+     main=paste("BRT"), ylim=c(0,5), xlim=c(0,5))
 # plot(x=plotwithin$fit, y=plotwithin$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+abline(a=0, b=1, col="dark grey", lwd=3)
 
 # Timeseries
 plot(x=dat.temp$Year, y=dat.temp$ln_rec,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("BRT"))
 grid(lty=3, col='dark gray')
 points(x=dat.temp$Year, y=dat.temp$ln_rec,
-       pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.temp$Year, y=plotwithin$predicted, lwd=3, col=rgb(0,0,1, alpha=0.5))
+       pch=21, bg="black")
+lines(x=dat.temp$Year, y=plotwithin$predicted, lwd=3, col="#1b9e77")
 #points(x=dat.temp$Year, y=plotwithin$predicted,
 #      pch=21, bg=rgb(0,1,0,alpha=0.5))
 
-legend('topleft', legend=c("Observed","Predicted"), lty=1, col=c(rgb(1,0,0,alpha=0.5),
-                                                                 rgb(0,0,1, alpha=0.5)), bg="white")
+legend('topleft', legend=c("Assessment model estimated","Predicted"), lty=1, col=c("black",
+                                                                                   "#1b9e77"), bg="white")
 
+
+#Plot within long and reduced together============================================
+
+
+#pdf(file.path(dir.figs,"Model Fit.pdf"), height=6, width=9)
+par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
+
+# Omit NAs
+dat.temp <- plotwithin_long
+
+plot(x=dat.temp$ln_rec, y=plotwithin_long$predicted,
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#d95f02",
+main=paste("BRT"), ylim=c(0,5), xlim=c(0,5))
+# plot(x=pred.bas$fit, y=pred.bas$Ybma) 
+abline(a=0, b=1, col="dark grey", lwd=3)
+points(x=dat.temp$ln_rec, y=plotwithin_reduced$predicted,
+       pch=21, bg="#7570b3")
+# points(x=pred.bas.long$Ypred, y=pred.bas.long$Ybma,
+#        pch=21, bg="#7570b3")
+
+# Timeseries
+plot(x=dat.temp$Year, y=dat.temp$ln_rec,
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("BRT"))
+grid(lty=3, col='dark gray')
+ # points(x=dat.temp$Year, y=dat.temp$ln_rec,
+ #        pch=21, bg="black")
+lines(x=dat.temp$Year, y=plotwithin_long$predicted, lwd=3, col="#d95f02")
+# points(x=dat.temp$Year, y=plotwithin_long$predicted,
+#        pch=21, bg="#d95f02")
+lines(x=dat.temp$Year, y=plotwithin_reduced$predicted, lwd=3, col="#7570b3")
+# points(x=dat.temp$Year, y=plotwithin_reduced$predicted,
+#        pch=21, bg="#7570b3")
+#conf_int <- confint(pred.bas, parm = "pred")
+#plotCI(x=dat.temp.na.omit$Year, y=pred.bas$Ybma,li=conf_int[,1], ui=conf_int[,2])
+
+legend('topleft', legend=c("Assessment model estimated","Predicted"), lty=1, col=c("black",
+                                                                                   "#1b9e77"), bg="white")
+
+dev.off()
 
 
 
@@ -605,22 +664,23 @@ par(oma=c(1,1,1,1), mar=c(4,4,1,1), mfrow=c(1,2))
 dat.temp <- output_df_long
 
 plot(x=dat.temp$observed_ln_recruit, y=dat.temp$predicted_ln_recruit,
-     xlab="Observed ln(Recruitment)", ylab="Predicted ln(Recruitment)", pch=21, bg=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"))
+     xlab="Assessment model estimated
+ln(recruitment)", ylab="Predicted ln(recruitment)", pch=21, bg="#d95f02",
+     main=paste("BRT"), ylim=c(0,5), xlim=c(0,5))
 # plot(x=pred.bas$fit, y=pred.bas$Ybma) 
-abline(a=0, b=1, col=rgb(0,0,1,alpha=0.5), lwd=3)
+abline(a=0, b=1, col="dark grey", lwd=3)
 points(x=dat.temp$observed_ln_recruit, y=output_df_reduced$predicted_ln_recruit,
-       pch=21, bg=rgb(0,1,0.5,alpha=0.5))
+       pch=21, bg="#7570b3")
 
 # Timeseries
 plot(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
-     xlab="Year", ylab="ln(Recruitment)", type='l', col=rgb(1,0,0,alpha=0.5),
-     main=paste("Sablefish"), ylim=c(0,5), xlim=c(1975,2021))
+     xlab="Year", ylab="ln(recruitment)", type='l', col="black",
+     main=paste("BRT"), ylim=c(0,5), xlim=c(1975,2021))
 grid(lty=3, col='dark gray')
 # points(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
 #        pch=21, bg=rgb(1,0,0,alpha=0.5))
-lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col=rgb(0,0,1, alpha=0.5))
-lines(x=dat.temp$Year, y=output_df_reduced$predicted_ln_recruit, lwd=3, col=rgb(0,1,0.5, alpha=0.5))
+lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col="#d95f02")
+lines(x=dat.temp$Year, y=output_df_reduced$predicted_ln_recruit, lwd=3, col="#7570b3")
 # points(x=dat.temp$Year, y=output_df$predicted_ln_recruit,
 #        pch=21, bg=rgb(0,1,0,alpha=0.5))
 
