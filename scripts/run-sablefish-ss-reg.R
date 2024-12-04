@@ -295,3 +295,46 @@ legend("topleft", legend=c(paste("Mean Abs. % Error: ", round(temp.mape, 1), "%"
        bty='n')
 
 dev.off()
+
+
+
+
+#  6) Attempting LOOCV ===========================================================
+#Fit the model
+stan.fit <- NULL
+yrs <- unique(dat.comb$Year)
+i<-1
+for(i in 1:length(dat.comb$Year)) { #update here tuesday
+  yr <- yrs[i]
+  
+  #drop years one at a time, refit
+  dat.comb.temp <- dat.comb[-i,]
+  
+  stan.data.temp <- list(
+    "n_year"=nrow(dat.comb.temp),
+    "rec_ln"=dat.comb$rec_ln,
+    "sd_ln"=dat.comb$sd_ln,
+    
+    "n_trends"=n_trends,
+    "trends"=trends,
+    "trends_se"=trends_se
+  )
+  
+  stan.fit <- stan(file=file.path(dir.stan, paste0("sablefish-ss-reg-v", version, ".stan")),
+                   model_name=paste0("sablefish-ss-reg-v", version),
+                   data=stan.data.temp,
+                   chains=n.chains, iter=n.iter, thin=n.thin,
+                   # chains=3, iter=5e3, thin=5,
+                   cores=n.chains, verbose=FALSE,
+                   seed=101,
+                   control = list(adapt_delta = 0.99))
+  # init=init_ll)
+  # Save Model Fit
+  saveRDS(stan.fit, file.path(dir.output, paste0("stan.fit.drop", yr, ".rds")))
+  
+}
+
+# Extract parameters as a list object
+pars <- rstan::extract(stan.fit)
+
+
