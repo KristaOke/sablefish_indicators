@@ -39,7 +39,6 @@ transformed parameters {
   
 }
 
-
 model {
   // PRIORS
   incpt ~ normal(0,10);
