@@ -57,10 +57,10 @@ dir.data <- file.path(wd,"data")
 # dir.R <- file.path(wd, "R")
 
 # CONTROL SECTION ==============================================================
-version <- 1 
+version <- 2 
 
 # Model Name
-mod <- c("model1", "model2")[2]
+mod <- c("model1", "model2")[2]  #Choose number of DFA trends to include
 mod.name <- paste0(mod, "_", "v", version)
 
 # Determine number of DFA trends to fit
@@ -71,7 +71,9 @@ if(mod=="model1") {
 }
 
 # Do we fit the model, or just load saved .rds outputs?
-fit <- TRUE 
+fit <- FALSE
+
+fit.loo <- TRUE
 
 # MCMC Parameters
 n.chains <- 3
@@ -118,13 +120,22 @@ tail(dat.comb)
 if(n_trends==1) {
   trends <- dat.comb$model1_state1
   trends_se <- dat.comb$model1_state1_SE
+  # For version 2 with forecast capacity
+  trends_fcst <- 0
+  trends_se_fcst <- mean(dat.comb$model1_state1_SE)
 }else {
   trends <- cbind(dat.comb$model2_state1, dat.comb$model2_state2)
   trends_se <- cbind(dat.comb$model2_state1_SE, dat.comb$model2_state2_SE)
+  # For version 2 with forecast capacity
+  trends_fcst <- c(0,0)
+  trends_se_fcst <- c(mean(dat.comb$model1_state1_SE), mean(dat.comb$model2_state2_SE))
 }
-# Convert to numeriuc
+# Convert to numeric
 trends <- as.matrix(trends)
 trends_se <- as.matrix(trends_se)
+
+trends_fcst <- t(as.matrix(trends_fcst))
+trends_se_fcst <- t(as.matrix(trends_se_fcst))
 
 
 
@@ -136,7 +147,11 @@ stan.data <- list(
   
   "n_trends"=n_trends,
   "trends"=trends,
-  "trends_se"=trends_se
+  "trends_se"=trends_se,
+  # v2 for forecast section
+  "n_year_fcst"=1,
+  "trends_fcst"=trends_fcst,
+  "trends_se_fcst"=trends_se_fcst
 )
 
 #  3) Function to Generate Initial Values ======================================
@@ -301,40 +316,94 @@ dev.off()
 
 #  6) Attempting LOOCV ===========================================================
 #Fit the model
-stan.fit <- NULL
-yrs <- unique(dat.comb$Year)
-i<-1
-for(i in 1:length(dat.comb$Year)) { #update here tuesday
-  yr <- yrs[i]
+if(fit.loo==TRUE) {
+
+  yrs <- unique(dat.comb$Year)
   
-  #drop years one at a time, refit
-  dat.comb.temp <- dat.comb[-i,]
+  loo.years <- yrs
+  loo.obs <- vector(length=length(yrs))
+  loo.pred <- vector(length=length(yrs))
   
-  stan.data.temp <- list(
-    "n_year"=nrow(dat.comb.temp),
-    "rec_ln"=dat.comb$rec_ln,
-    "sd_ln"=dat.comb$sd_ln,
+  i <- 1
+  for(i in 1:length(dat.comb$Year)) { #update here tuesday
+    print(paste("i:",i,"of",length(dat.comb$Year)))
+    yr <- yrs[i]
     
-    "n_trends"=n_trends,
-    "trends"=trends,
-    "trends_se"=trends_se
-  )
+    # Fitting data with missing year
+    dat.comb.fit <- dat.comb[-i,]
+    
+    # Forecast data for witheld year
+    dat.comb.fcst <- dat.comb[i,]
+    
+    # Save Truth
+    loo.obs[i] <- dat.comb.fcst$rec_ln
+    
+    # Create trends objects
+    
+    if(n_trends==1) {
+      trends <- dat.comb.fit$model1_state1
+      trends_se <- dat.comb.fit$model1_state1_SE
+      # For version 2 with forecast capacity
+      trends_fcst <- dat.comb.fcst$model1_state1
+      trends_se_fcst <- dat.comb.fcst$model1_state1_SE
+    }else {
+      trends <- cbind(dat.comb.fit$model2_state1, dat.comb.fit$model2_state2)
+      trends_se <- cbind(dat.comb.fit$model2_state1_SE, dat.comb.fit$model2_state2_SE)
+      # For version 2 with forecast capacity
+      trends_fcst <- cbind(dat.comb.fcst$model2_state1, dat.comb.fcst$model2_state2)
+      trends_se_fcst <- cbind(dat.comb.fcst$model2_state1_SE, dat.comb.fcst$model2_state2_SE)
+    }
+    # Convert to numeric
+    trends <- as.matrix(trends)
+    trends_se <- as.matrix(trends_se)
+    
+    trends_fcst <- t(as.matrix(trends_fcst))
+    trends_se_fcst <- t(as.matrix(trends_se_fcst))
+    
+    # Create Stan Input file
+    stan.data <- list(
+      "n_year"=nrow(dat.comb.fit),
+      "rec_ln"=dat.comb.fit$rec_ln,
+      "sd_ln"=dat.comb.fit$sd_ln,
+      
+      "n_trends"=n_trends,
+      "trends"=trends,
+      "trends_se"=trends_se,
+      # v2 for forecast section
+      "n_year_fcst"=1,
+      "trends_fcst"=trends_fcst,
+      "trends_se_fcst"=trends_se_fcst
+    )
+    
+    stan.fit <- NULL
+    stan.fit <- stan(file=file.path(dir.stan, paste0("sablefish-ss-reg-v", version, ".stan")),
+                     model_name=paste0("sablefish-ss-reg-v", version),
+                     data=stan.data,
+                     chains=n.chains, iter=n.iter, thin=n.thin,
+                     # chains=3, iter=5e3, thin=5,
+                     cores=n.chains, verbose=FALSE,
+                     seed=101,
+                     control = list(adapt_delta = 0.99))
+    # init=init_ll)
+    # Save Model Fit
+    saveRDS(stan.fit, file.path(dir.output, paste0("stan.fit.drop", yr, ".rds")))
+    
+    # Extract parameters as a list object
+    pars <- rstan::extract(stan.fit)
+    
+    # Save prediction for ln_rec in witheld year
+    loo.pred[i] <- median(pars$pred_rec_ln_fcst)
+  } # next i (year)
   
-  stan.fit <- stan(file=file.path(dir.stan, paste0("sablefish-ss-reg-v", version, ".stan")),
-                   model_name=paste0("sablefish-ss-reg-v", version),
-                   data=stan.data.temp,
-                   chains=n.chains, iter=n.iter, thin=n.thin,
-                   # chains=3, iter=5e3, thin=5,
-                   cores=n.chains, verbose=FALSE,
-                   seed=101,
-                   control = list(adapt_delta = 0.99))
-  # init=init_ll)
-  # Save Model Fit
-  saveRDS(stan.fit, file.path(dir.output, paste0("stan.fit.drop", yr, ".rds")))
+  # Save LOO results
+  loo.results <- data.frame(loo.years, loo.obs, loo.pred) %>% 
+                   rename("year"="loo.years",
+                          "observed"="loo.obs",
+                          "predicted"="loo.pred")
   
+  write.csv(loo.results, file.path(dir.figs, "loo.results.csv"))
+
 }
 
-# Extract parameters as a list object
-pars <- rstan::extract(stan.fit)
 
 
