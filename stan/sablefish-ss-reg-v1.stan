@@ -1,4 +1,4 @@
-// State-space Regression for Sablefish Indicator
+// State-space Regression for Sablefish Indicator - v1
 
 data {
   int<lower=0> n_year;
@@ -8,6 +8,7 @@ data {
   int<lower=0> n_trends;
   matrix[n_year, n_trends] trends;
   matrix[n_year, n_trends] trends_se;
+
 }
 
 
