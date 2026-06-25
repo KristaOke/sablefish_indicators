@@ -64,6 +64,27 @@ model {
 }
 
 generated quantities {
+  // Forecasted Quantities   
+  vector[n_trends] pred_trends_fcst[n_year_fcst];
+  vector[n_year_fcst] pred_rec_ln_fcst;
+  vector[n_year_fcst] temp_eff_fcst; // Temporary additive effect of DFA trends
   
+  
+  // Randomly sample value for forecasted trends   
+  // Process Model
+  for(t in 1:n_trends) {
+    for(y in 1:n_year_fcst) {
+      // trends[y,t] ~ normal(pred_trends[y,t], trends_se[y,t]);
+      pred_trends_fcst[y,t] = normal_rng(trends_fcst[y,t], trends_se_fcst[y,t]);
+    } // next y
+  } // next t
+  
+  for(y in 1:n_year_fcst) {
+    temp_eff_fcst[y]=0.0;
+    for(t in 1:n_trends) {
+      temp_eff_fcst[y] += slp[t]*pred_trends_fcst[y,t];
+    } // next t
+    pred_rec_ln_fcst[y] = incpt + temp_eff_fcst[y];
+  } // next y
 }
 
