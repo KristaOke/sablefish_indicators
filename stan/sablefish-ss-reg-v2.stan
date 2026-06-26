@@ -25,8 +25,8 @@ parameters {
   // vector[n_trends] slp;
   
   // Estimated trend
-  // matrix[n_year, n_trends] pred_trends;
-  vector[n_trends] pred_trends[n_year];
+  matrix[n_year, n_trends] pred_trends;
+  // vector[n_trends] pred_trends[n_year];
   
 }
 
@@ -65,10 +65,14 @@ model {
 
 generated quantities {
   // Forecasted Quantities   
-  vector[n_trends] pred_trends_fcst[n_year_fcst];
   vector[n_year_fcst] pred_rec_ln_fcst;
   vector[n_year_fcst] temp_eff_fcst; // Temporary additive effect of DFA trends
-  
+  // Posterior predicted quantities 
+  // vector[n_trends] pred_trends_fcst[n_year_fcst];
+  matrix[n_year_fcst, n_trends] pred_trends_fcst;
+  vector[n_year_fcst] pred_rec_ln_fcst_postPred;
+  vector[n_year_fcst] temp_eff_fcst_postPred; // Temporary additive effect of DFA trends
+
   
   // Randomly sample value for forecasted trends   
   // Process Model
@@ -81,9 +85,12 @@ generated quantities {
   
   for(y in 1:n_year_fcst) {
     temp_eff_fcst[y]=0.0;
+    temp_eff_fcst_postPred[y]=0.0;
     for(t in 1:n_trends) {
-      temp_eff_fcst[y] += slp[t]*pred_trends_fcst[y,t];
+      temp_eff_fcst_postPred[y] += slp[t]*pred_trends_fcst[y,t];
+      temp_eff_fcst[y] += slp[t]*trends_fcst[y,t];
     } // next t
+    pred_rec_ln_fcst_postPred[y] = incpt + temp_eff_fcst_postPred[y];
     pred_rec_ln_fcst[y] = incpt + temp_eff_fcst[y];
   } // next y
 }

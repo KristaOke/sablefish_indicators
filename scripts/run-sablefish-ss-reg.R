@@ -323,9 +323,15 @@ if(fit.loo==TRUE) {
   loo.years <- yrs
   loo.obs <- vector(length=length(yrs))
   loo.pred <- vector(length=length(yrs))
+  loo.postPred <- vector(length=length(yrs))
+  
+  # List to hold extracted parameters
+  loo.pars <- vector("list", length=length(yrs))
+  names(loo.pars) <- yrs
   
   i <- 1
   for(i in 1:length(dat.comb$Year)) { #update here tuesday
+  
     print(paste("i:",i,"of",length(dat.comb$Year)))
     yr <- yrs[i]
     
@@ -357,10 +363,11 @@ if(fit.loo==TRUE) {
     trends <- as.matrix(trends)
     trends_se <- as.matrix(trends_se)
     
-    trends_fcst <- t(as.matrix(trends_fcst))
-    trends_se_fcst <- t(as.matrix(trends_se_fcst))
+    trends_fcst <- as.matrix(trends_fcst)
+    trends_se_fcst <- as.matrix(trends_se_fcst)
     
     # Create Stan Input file
+    stan.data <- NULL
     stan.data <- list(
       "n_year"=nrow(dat.comb.fit),
       "rec_ln"=dat.comb.fit$rec_ln,
@@ -379,31 +386,48 @@ if(fit.loo==TRUE) {
     stan.fit <- stan(file=file.path(dir.stan, paste0("sablefish-ss-reg-v", version, ".stan")),
                      model_name=paste0("sablefish-ss-reg-v", version),
                      data=stan.data,
-                     chains=n.chains, iter=n.iter, thin=n.thin,
+                     chains=n.chains, iter=n.iter/2, thin=n.thin, # Half as many samples for testing
                      # chains=3, iter=5e3, thin=5,
                      cores=n.chains, verbose=FALSE,
-                     seed=101,
+                     seed=101, refresh = 0,
                      control = list(adapt_delta = 0.99))
     # init=init_ll)
     # Save Model Fit
-    saveRDS(stan.fit, file.path(dir.output, paste0("stan.fit.drop", yr, ".rds")))
+    # saveRDS(stan.fit, file.path(dir.output, paste0("stan.fit.drop", yr, ".rds")))
     
     # Extract parameters as a list object
     pars <- rstan::extract(stan.fit)
+    loo.pars[[i]] <- pars
     
     # Save prediction for ln_rec in witheld year
     loo.pred[i] <- median(pars$pred_rec_ln_fcst)
+    
+    # Posterior predicted values     
+    loo.postPred[i] <- median(pars$pred_rec_ln_fcst_postPred)
+    
   } # next i (year)
   
   # Save LOO results
-  loo.results <- data.frame(loo.years, loo.obs, loo.pred) %>% 
+  loo.results <- data.frame(loo.years, loo.obs, loo.pred, loo.postPred) %>% 
                    rename("year"="loo.years",
                           "observed"="loo.obs",
-                          "predicted"="loo.pred")
+                          "predicted"="loo.pred",
+                          "posteriorPred"="loo.postPred")
   
   write.csv(loo.results, file.path(dir.figs, "loo.results.csv"))
+  
+  # Save parameters
+  saveRDS(loo.pars, file.path(dir.output, "loo.pars.rds"))
 
+}else {
+  loo.results <- read.csv(file.path(dir.figs, "loo.results.csv"))
+  loo.pars <- readRDS(file.path(dir.output, "loo.pars.rds"))
 }
+
+# Plotting LOO results
+
+yardstick::rmse_vec(truth=loo.results$observed, estimate=loo.results$predicted)
+yardstick::rmse_vec(truth=loo.results$observed, estimate=loo.results$posteriorPred)
 
 
 
