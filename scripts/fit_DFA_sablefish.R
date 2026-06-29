@@ -27,6 +27,7 @@ library(lmtest)
 library(cowplot)
 library(AKesp)
 library(corrplot)
+library(tidyverse)
 
 #=============================================================
 #### Define Directory Structure ####
@@ -74,6 +75,9 @@ scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Smr_euph_abun_K
 scaled_dfa_dat$Year==scaled_dfa_dat$Year[order(scaled_dfa_dat$Year)] #SHOULD BE ALL TRUE
 
 #then drop Year column
+
+#leave out 2020 b/c it's a longterm mean
+scaled_dfa_dat <- scaled_dfa_dat[which(scaled_dfa_dat$Year<2020),]
 
 #scaled_dfa_dat <- scaled_dfa_dat[,!names(scaled_dfa_dat) %in% c("Year")]
 
@@ -128,8 +132,8 @@ model.data1 <- model.data1 %>%
 model.data1
 
 #write_csv(model.data1, file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_zscor-fixed.csv", sep=""))
-write_csv(model.data1, file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_zscor-fixed_conv.csv", sep=""))
-model.data1 <- read_csv(file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_zscor-fixed.csv", sep=""))
+write_csv(model.data1, file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_zscor-fixed_conv_to2019.csv", sep=""))
+model.data1 <- read_csv(file = paste(wd,"/scripts/model_comparison_DFA_wholedataset_zscor-fixed_conv_to2019.csv", sep=""))
 
 
 #---
@@ -300,7 +304,7 @@ for (i in 1:mm) {
   ## add panel labels
   mtext(paste("State", i), side = 3, line = 0.5)
   #axis(1, 12 * (0:dim(all.clim.dat)[2]) + 1, yr_frst + 0:dim(all.clim.dat)[2])
-  axis(1, 1:47, yr_frst + 0:dim(z.mat1)[2])
+  axis(1, 1:44, yr_frst + 0:dim(z.mat1)[2])
 }
 ## plot the loadings
 clr <- c("blue", "blue", "blue", "blue", 
@@ -508,7 +512,7 @@ for (i in 1:mm) {
   ## add panel labels
   mtext(paste("State", i), side = 3, line = 0.5)
   #axis(1, 12 * (0:dim(all.clim.dat)[2]) + 1, yr_frst + 0:dim(all.clim.dat)[2])
-  axis(1, 1:47, yr_frst + 0:dim(z.mat1)[2])
+  axis(1, 1:44, yr_frst + 0:dim(z.mat1)[2])
 }
 ## plot the loadings
 clr <- c("blue", "blue", "blue", "blue", 
@@ -525,10 +529,10 @@ for (i in 1:mm) {
        xaxt = "n", ylim = ylm, xlim = c(0.5, N_ts + 0.5), col=clr)
   for (j in 1:N_ts) {
     if (Z_rot[j, i] > minZ) {
-      text(j, -0.03, ylbl[j], srt = 90, adj = 1, cex = 1.2, col=clr[j])
+      text(j, -0.03, ylbl[j], srt = 90, adj = 1, cex = 0.9, col=clr[j])
     }
     if (Z_rot[j, i] < -minZ) {
-      text(j, 0.03, ylbl[j], srt = 90, adj = 0, cex = 1.2, col=clr[j])
+      text(j, 0.03, ylbl[j], srt = 90, adj = 0, cex = 0.9, col=clr[j])
     }
     abline(h = 0, lwd = 1.5, col = "gray")
   }
@@ -909,7 +913,7 @@ abline(a=0, b=1, col="dark grey", lwd=3)
 # Timeseries
 plot(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
      xlab="Year", ylab="ln(recruitment)", type='l', col="black",
-     main=paste("DFA + regression"), ylim=c(0,5), xlim=c(1975,2021))
+     main=paste("DFA + regression"), ylim=c(1,5), xlim=c(1975,2021))
 grid(lty=3, col='dark gray')
  # points(x=dat.temp$Year, y=dat.temp$observed_ln_recruit,
  #        pch=21, bg="black")
@@ -941,7 +945,7 @@ trends_join$Year <- as.integer(trends_join$Year)
 
 trends_rec_dat <- left_join(trends_join, scaled[,names(scaled) %in% c("ln_rec", "Year")])
 
-write_csv(trends_rec_dat, file = paste(wd,"/data/DFA_trends_recruit_data.csv", sep=""))
+write_csv(trends_rec_dat, file = paste(wd,"/data/DFA_trends_recruit_data_updated.csv", sep=""))
 
 
 #RMSE and MAE on simple regressions------
@@ -1137,4 +1141,28 @@ lines(x=dat.temp$Year, y=dat.temp$predicted_ln_recruit, lwd=3, col="#1b9e77")
 
 
 #
+
+
+
+
+#RMSE and MAE on state space regressions------
+library(yardstick)
+
+
+
+ggplot(quick1_df, aes(observed_ln_recruit, predicted_ln_recruit)) + 
+  #geom_point() + 
+  geom_smooth(method="lm") + geom_abline(intercept = 0, slope = 1) + 
+  geom_text(aes(observed_ln_recruit, predicted_ln_recruit, label=Year))+
+  ylim(c(0,5)) + xlim(c(0,5)) + theme_bw()
+
+
+obs_pred_mod <- lm(predicted_ln_recruit ~ observed_ln_recruit, data=quick1_df)
+summary(obs_pred_mod)
+
+quick1_rmse <- rmse(quick1_df, truth=observed_ln_recruit, 
+                    estimate=predicted_ln_recruit, na.rm=TRUE)
+
+quick1_mae <- mae(quick1_df, truth=observed_ln_recruit, 
+                  estimate=predicted_ln_recruit, na.rm=TRUE)
 
