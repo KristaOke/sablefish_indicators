@@ -57,11 +57,12 @@ dir.data <- file.path(wd,"data")
 # dir.R <- file.path(wd, "R")
 
 # CONTROL SECTION ==============================================================
-version <- 2 
+version <- 1 
+run_n <- 1
 
 # Model Name
-mod <- c("model1", "model2")[2]  #Choose number of DFA trends to include
-run <- c("1977to2019", "1996to2019")[2]
+mod <- c("model1", "model2")[1]  #Choose number of DFA trends to include
+run <- c("1977to2019", "1996to2019")[run_n]
 mod.name <- paste0(mod, "_", "v", version, "_", run)
 
 # Determine number of DFA trends to fit
@@ -104,7 +105,7 @@ head(dat.comb)
 
 #trim data 
 
-dat.comb <- dat.comb[,which(dat.comb$Year<2020)] 
+dat.comb <- dat.comb[which(dat.comb$Year<2020),] 
 
 #SELECT RUN HERE
 run <- "1977to2019"
