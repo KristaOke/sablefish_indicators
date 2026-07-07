@@ -113,7 +113,7 @@ run <- "1977to2019"
 
 # Determine number of DFA trends to fit
 if(run=="1996to2019") {
-  dat.comb <- dat.comb[,which(dat.comb$Year>1995)]  
+  dat.comb <- dat.comb[which(dat.comb$Year>1995),]  
 }
 #  2) Craft Stan Input Objects =================================================
 
