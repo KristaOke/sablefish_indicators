@@ -90,7 +90,7 @@ dir.create(dir.output, recursive=TRUE)
 #  1) Read in data =============================================================
 
 # DFA Trends (predictor)
-dat.dfa <- read_csv(file.path(dir.data, "DFA_trends_recruit_data.csv"))
+dat.dfa <- read_csv(file.path(dir.data, "DFA_trends_recruit_data_updated.csv"))
 head(dat.dfa)
 
 # Sablefish Recruitment Data (response)
