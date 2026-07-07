@@ -102,6 +102,18 @@ head(dat.rec)
 dat.comb <- dat.rec %>% left_join(dat.dfa) %>% dplyr::select(-ln_rec)
 head(dat.comb)
 
+#trim data 
+
+dat.comb <- dat.comb[,which(dat.comb$Year<2020)] 
+
+#SELECT RUN HERE
+run <- "1977to2019"
+#run <- "1996to2019" #USE FOR SHORT TIME SERIES
+
+# Determine number of DFA trends to fit
+if(run=="1996to2019") {
+  dat.comb <- dat.comb[,which(dat.comb$Year>1995)]  
+}
 #  2) Craft Stan Input Objects =================================================
 
 # Calculate CV (normal space)
