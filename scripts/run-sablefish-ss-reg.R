@@ -61,7 +61,8 @@ version <- 2
 
 # Model Name
 mod <- c("model1", "model2")[2]  #Choose number of DFA trends to include
-mod.name <- paste0(mod, "_", "v", version)
+run <- c("1977to2019", "1996to2019")[2]
+mod.name <- paste0(mod, "_", "v", version, "_", run)
 
 # Determine number of DFA trends to fit
 if(mod=="model1") {
