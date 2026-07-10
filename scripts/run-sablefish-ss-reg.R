@@ -397,8 +397,8 @@ if(fit.loo==TRUE) {
     )
     
     stan.fit <- NULL
-    stan.fit <- stan(file=file.path(dir.stan, paste0("sablefish-ss-reg-v", version, ".stan")),
-                     model_name=paste0("sablefish-ss-reg-v", version),
+    stan.fit <- stan(file=file.path(dir.stan, paste0("sablefish-ss-reg-v", version, run, ".stan")),
+                     model_name=paste0("sablefish-ss-reg-v", version, run),
                      data=stan.data,
                      chains=n.chains, iter=n.iter/2, thin=n.thin, # Half as many samples for testing
                      # chains=3, iter=5e3, thin=5,
